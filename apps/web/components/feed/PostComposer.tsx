@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import type { FeedPost, PublicUser } from "./feed-types";
 import { displayName } from "./feed-types";
 
-const AVATAR = "https://placehold.co/40x40/e8eef5/377dff?text=%E2%80%A2";
+const AVATAR = "https://placehold.co/40x40/e0e7ff/4338ca?text=%E2%80%A2";
 
 export function PostComposer({
   me,
@@ -32,7 +32,7 @@ export function PostComposer({
       fd.set("body", body.trim());
       fd.set("visibility", visibility);
       if (file) fd.set("image", file);
-      const res = await fetch("/api/posts", { method: "POST", body: fd });
+      const res = await fetch("/api/posts", { method: "POST", body: fd, credentials: "include" });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setErr(typeof data.error === "string" ? data.error : "Could not post");
@@ -48,98 +48,73 @@ export function PostComposer({
   }
 
   return (
-    <div className="_feed_inner_text_area  _b_radious6 _padd_b24 _padd_t24 _padd_r24 _padd_l24 _mar_b16">
-      <div className="_feed_inner_text_area_box">
-        <div className="_feed_inner_text_area_box_image">
-          <img src={AVATAR} alt="" className="_txt_img" width={40} height={40} />
-        </div>
-        <div className="form-floating _feed_inner_text_area_box_form ">
+    <div className="mb-6 rounded-2xl border border-slate-200/90 bg-white/95 p-5 shadow-soft backdrop-blur dark:border-slate-800 dark:bg-slate-900/90 sm:p-6">
+      <div className="flex gap-3">
+        <img src={AVATAR} alt="" className="mt-1 h-10 w-10 shrink-0 rounded-xl object-cover" width={40} height={40} />
+        <div className="min-w-0 flex-1">
           <textarea
-            className="form-control _textarea"
-            placeholder="Leave a comment here"
-            id="floatingComposer"
+            className="min-h-[100px] w-full resize-y rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15 dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-100 dark:focus:border-indigo-400"
+            placeholder="What's on your mind?"
             value={body}
             onChange={(e) => setBody(e.target.value)}
           />
-          <label className="_feed_textarea_label" htmlFor="floatingComposer">
-            Write something ...
-            <svg xmlns="http://www.w3.org/2000/svg" width="23" height="24" fill="none" viewBox="0 0 23 24">
-              <path
-                fill="#666"
-                d="M19.504 19.209c.332 0 .601.289.601.646 0 .326-.226.596-.52.64l-.081.005h-6.276c-.332 0-.602-.289-.602-.645 0-.327.227-.597.52-.64l.082-.006h6.276zM13.4 4.417c1.139-1.223 2.986-1.223 4.125 0l1.182 1.268c1.14 1.223 1.14 3.205 0 4.427L9.82 19.649a2.619 2.619 0 01-1.916.85h-3.64c-.337 0-.61-.298-.6-.66l.09-3.941a3.019 3.019 0 01.794-1.982l8.852-9.5zm-.688 2.562l-7.313 7.85a1.68 1.68 0 00-.441 1.101l-.077 3.278h3.023c.356 0 .698-.133.968-.376l.098-.096 7.35-7.887-3.608-3.87zm3.962-1.65a1.633 1.633 0 00-2.423 0l-.688.737 3.606 3.87.688-.737c.631-.678.666-1.755.105-2.477l-.105-.124-1.183-1.268z"
-              />
-            </svg>
-          </label>
         </div>
       </div>
-      <div className="_feed_inner_text_area_bottom">
-        <div className="_feed_inner_text_area_item">
-          <div className="_feed_inner_text_area_bottom_photo _feed_common">
-            <button
-              type="button"
-              className="_feed_inner_text_area_bottom_photo_link"
-              onClick={() => inputRef.current?.click()}
-            >
-              <span className="_feed_inner_text_area_bottom_photo_iamge _mar_img">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 20 20">
-                  <path
-                    fill="#666"
-                    d="M13.916 0c3.109 0 5.18 2.429 5.18 5.914v8.17c0 3.486-2.072 5.916-5.18 5.916H5.999C2.89 20 .827 17.572.827 14.085v-8.17C.827 2.43 2.897 0 6 0h7.917zm0 1.504H5.999c-2.321 0-3.799 1.735-3.799 4.41v8.17c0 2.68 1.472 4.412 3.799 4.412h7.917c2.328 0 3.807-1.734 3.807-4.411v-8.17c0-2.678-1.478-4.411-3.807-4.411zm.65 8.68l.12.125 1.9 2.147a.803.803 0 01-.016 1.063.642.642 0 01-.894.058l-.076-.074-1.9-2.148a.806.806 0 00-1.205-.028l-.074.087-2.04 2.717c-.722.963-2.02 1.066-2.86.26l-.111-.116-.814-.91a.562.562 0 00-.793-.07l-.075.073-1.4 1.617a.645.645 0 01-.97.029.805.805 0 01-.09-.977l.064-.086 1.4-1.617c.736-.852 1.95-.897 2.734-.137l.114.12.81.905a.587.587 0 00.861.033l.07-.078 2.04-2.718c.81-1.08 2.27-1.19 3.205-.275zM6.831 4.64c1.265 0 2.292 1.125 2.292 2.51 0 1.386-1.027 2.511-2.292 2.511S4.54 8.537 4.54 7.152c0-1.386 1.026-2.51 2.291-2.51zm0 1.504c-.507 0-.918.451-.918 1.007 0 .555.411 1.006.918 1.006.507 0 .919-.451.919-1.006 0-.556-.412-1.007-.919-1.007z"
-                  />
-                </svg>
-              </span>
-              Photo
-            </button>
-            <input
-              ref={inputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              className="d-none"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            />
-          </div>
-          <div className="d-flex align-items-center ms-2 gap-2 small">
-            <span className="text-muted">Audience:</span>
+
+      <div className="mt-4 flex flex-col gap-4 border-t border-slate-100 pt-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-600"
+            onClick={() => inputRef.current?.click()}
+          >
+            <svg className="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            Photo
+          </button>
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="hidden"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          />
+          <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+            <span className="whitespace-nowrap font-medium">Audience</span>
             <select
-              className="form-select form-select-sm"
-              style={{ maxWidth: 140 }}
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
               value={visibility}
               onChange={(e) => setVisibility(e.target.value as "PUBLIC" | "PRIVATE")}
             >
               <option value="PUBLIC">Public</option>
-              <option value="PRIVATE">Private (only me)</option>
+              <option value="PRIVATE">Only me</option>
             </select>
-          </div>
+          </label>
         </div>
-        <div className="_feed_inner_text_area_btn">
-          <button
-            type="button"
-            className="_feed_inner_text_area_btn_link"
-            onClick={() => void submit()}
-            disabled={loading}
-          >
-            <svg className="_mar_img" xmlns="http://www.w3.org/2000/svg" width="14" height="13" fill="none" viewBox="0 0 14 13">
-              <path
-                fill="#fff"
-                fillRule="evenodd"
-                d="M6.37 7.879l2.438 3.955a.335.335 0 00.34.162c.068-.01.23-.05.289-.247l3.049-10.297a.348.348 0 00-.09-.35.341.341 0 00-.34-.088L1.75 4.03a.34.34 0 00-.247.289.343.343 0 00.16.347L5.666 7.17 9.2 3.597a.5.5 0 01.712.703L6.37 7.88zM9.097 13c-.464 0-.89-.236-1.14-.641L5.372 8.165l-4.237-2.65a1.336 1.336 0 01-.622-1.331c.074-.536.441-.96.957-1.112L11.774.054a1.347 1.347 0 011.67 1.682l-3.05 10.296A1.332 1.332 0 019.098 13z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <span>{loading ? "Posting…" : "Post"}</span>
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => void submit()}
+          disabled={loading}
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+          </svg>
+          {loading ? "Posting…" : "Post"}
+        </button>
       </div>
+
       {file ? (
-        <p className="small text-muted mt-2 mb-0">
-          Attached: {file.name}{" "}
-          <button type="button" className="btn btn-link btn-sm p-0" onClick={() => setFile(null)}>
-            remove
+        <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+          Attached: <span className="font-medium text-slate-700 dark:text-slate-300">{file.name}</span>{" "}
+          <button type="button" className="ml-1 font-semibold text-indigo-600 hover:underline dark:text-indigo-400" onClick={() => setFile(null)}>
+            Remove
           </button>
         </p>
       ) : null}
-      {err ? <p className="text-danger small mt-2 mb-0">{err}</p> : null}
-      <p className="small text-muted mt-2 mb-0">Posting as {displayName(me)}</p>
+      {err ? <p className="mt-3 text-sm font-medium text-red-600 dark:text-red-400">{err}</p> : null}
+      <p className="mt-2 text-xs text-slate-500 dark:text-slate-500">Posting as {displayName(me)}</p>
     </div>
   );
 }

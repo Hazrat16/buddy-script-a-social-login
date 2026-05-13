@@ -8,6 +8,8 @@ import { PostComposer } from "./PostComposer";
 import { PostCard } from "./PostCard";
 import type { FeedPost, PublicUser } from "./feed-types";
 
+const fetchOpts: RequestInit = { credentials: "include" };
+
 export function FeedPageClient() {
   const router = useRouter();
   const [me, setMe] = useState<PublicUser | null>(null);
@@ -24,7 +26,7 @@ export function FeedPageClient() {
     try {
       const url = new URL("/api/posts", window.location.origin);
       url.searchParams.set("cursor", cursor);
-      const res = await fetch(url.toString());
+      const res = await fetch(url.toString(), fetchOpts);
       if (res.status === 401) {
         router.push("/login");
         return;
@@ -44,7 +46,7 @@ export function FeedPageClient() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const u = await fetch("/api/auth/me");
+      const u = await fetch("/api/auth/me", fetchOpts);
       const ud = await u.json();
       if (cancelled) return;
       if (!u.ok || !ud.user) {
@@ -54,7 +56,7 @@ export function FeedPageClient() {
       setMe(ud.user);
       setLoading(true);
       const url = new URL("/api/posts", window.location.origin);
-      const res = await fetch(url.toString());
+      const res = await fetch(url.toString(), fetchOpts);
       const data = await res.json();
       if (!cancelled && res.ok) {
         setPosts(data.posts as FeedPost[]);
@@ -69,102 +71,77 @@ export function FeedPageClient() {
 
   if (!me || loading) {
     return (
-      <div className="_layout _layout_main_wrapper d-flex align-items-center justify-content-center" style={{ minHeight: "50vh" }}>
-        <p className="_social_login_content_para">Loading…</p>
+      <div className="flex min-h-screen flex-col">
+        <div className="h-14 animate-pulse border-b border-slate-200/80 bg-white/80 dark:border-slate-800 dark:bg-slate-950/80" />
+        <div className="flex flex-1 items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="h-10 w-10 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
+            <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Loading your feed…</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="_layout _layout_main_wrapper">
-      <div className="_layout_mode_swithing_btn">
-        <button
-          type="button"
-          className="_layout_swithing_btn_link"
-          onClick={() => document.querySelector("._layout_main_wrapper")?.classList.toggle("_dark_wrapper")}
-        >
-          <div className="_layout_swithing_btn">
-            <div className="_layout_swithing_btn_round" />
-          </div>
-          <div className="_layout_change_btn_ic1">
-            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="16" fill="none" viewBox="0 0 11 16">
-              <path
-                fill="#fff"
-                d="M2.727 14.977l.04-.498-.04.498zm-1.72-.49l.489-.11-.489.11zM3.232 1.212L3.514.8l-.282.413zM9.792 8a6.5 6.5 0 00-6.5-6.5v-1a7.5 7.5 0 017.5 7.5h-1zm-6.5 6.5a6.5 6.5 0 006.5-6.5h1a7.5 7.5 0 01-7.5 7.5v-1zm-.525-.02c.173.013.348.02.525.02v1c-.204 0-.405-.008-.605-.024l.08-.997zm-.261-1.83A6.498 6.498 0 005.792 7h1a7.498 7.498 0 01-3.791 6.52l-.495-.87zM5.792 7a6.493 6.493 0 00-2.841-5.374L3.514.8A7.493 7.493 0 016.792 7h-1zm-3.105 8.476c-.528-.042-.985-.077-1.314-.155-.316-.075-.746-.242-.854-.726l.977-.217c-.028-.124-.145-.09.106-.03.237.056.6.086 1.165.131l-.08.997zm.314-1.956c-.622.354-1.045.596-1.31.792a.967.967 0 00-.204.185c-.01.013.027-.038.009-.12l-.977.218a.836.836 0 01.144-.666c.112-.162.27-.3.433-.42.324-.24.814-.519 1.41-.858L3 13.52zM3.292 1.5a.391.391 0 00.374-.285A.382.382 0 003.514.8l-.563.826A.618.618 0 012.702.95a.609.609 0 01.59-.45v1z"
-              />
-            </svg>
-          </div>
-          <div className="_layout_change_btn_ic2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="4.389" stroke="#fff" transform="rotate(-90 12 12)" />
-              <path
-                stroke="#fff"
-                strokeLinecap="round"
-                d="M3.444 12H1M23 12h-2.444M5.95 5.95L4.222 4.22M19.778 19.779L18.05 18.05M12 3.444V1M12 23v-2.445M18.05 5.95l1.728-1.729M4.222 19.779L5.95 18.05"
-              />
-            </svg>
-          </div>
-        </button>
-      </div>
-      <div className="_main_layout">
-        <FeedNav user={me} />
-        <div className="container _custom_container">
-          <div className="_layout_inner_wrap">
-            <div className="row">
-              <div className="col-xl-3 col-lg-3 col-md-12 col-sm-12">
-                <div className="_layout_left_sidebar_wrap">
-                  <div className="_layout_left_sidebar_inner">
-                    <div className="_left_inner_area_explore _padd_t24  _padd_b6 _padd_r24 _padd_l24 _b_radious6 _feed_inner_area">
-                      <h4 className="_left_inner_area_explore_title _title5  _mar_b24">Explore</h4>
-                      <ul className="_left_inner_area_explore_list">
-                        <li className="_left_inner_area_explore_item _explore_item">
-                          <Link href="#0" className="_left_inner_area_explore_link">
-                            Feed home
-                          </Link>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="col-xl-6 col-lg-6 col-md-12 col-sm-12">
-                <div className="_layout_middle_wrap">
-                  <div className="_layout_middle_inner">
-                    <PostComposer
-                      me={me}
-                      onPosted={(newPost) => setPosts((prev) => [newPost, ...prev])}
-                    />
-                    {err ? <p className="text-danger">{err}</p> : null}
-                    {posts.map((p) => (
-                      <PostCard key={p.id} post={p} />
-                    ))}
-                    {cursor ? (
-                      <div className="text-center _mar_b16">
-                        <button
-                          type="button"
-                          className="_social_login_form_btn_link _btn1"
-                          disabled={loadingMore}
-                          onClick={() => void loadMore()}
-                        >
-                          {loadingMore ? "Loading…" : "Load more"}
-                        </button>
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-              <div className="col-xl-3 col-lg-3 d-none d-xl-block">
-                <div className="_layout_middle_wrap">
-                  <div className="_feed_inner_area _padd_t24 _padd_b24 _padd_r24 _padd_l24 _b_radious6">
-                    <h4 className="_title5 _mar_b16">Tips</h4>
-                    <p className="small text-muted mb-0">
-                      Private posts are visible only to you. Public posts appear in everyone&apos;s feed.
-                    </p>
-                  </div>
-                </div>
+    <div className="min-h-screen pb-16">
+      <FeedNav user={me} />
+
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+        <div className="grid gap-8 lg:grid-cols-12">
+          <aside className="hidden lg:col-span-3 lg:block">
+            <div className="sticky top-24 space-y-4">
+              <div className="rounded-2xl border border-slate-200/90 bg-white/90 p-5 shadow-soft dark:border-slate-800 dark:bg-slate-900/90">
+                <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Explore</h2>
+                <ul className="mt-4 space-y-1">
+                  <li>
+                    <Link
+                      href="/feed"
+                      className="flex items-center gap-2 rounded-xl bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300"
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                      Feed home
+                    </Link>
+                  </li>
+                </ul>
               </div>
             </div>
-          </div>
+          </aside>
+
+          <main className="lg:col-span-6">
+            <PostComposer me={me} onPosted={(newPost) => setPosts((prev) => [newPost, ...prev])} />
+            {err ? (
+              <p className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200">
+                {err}
+              </p>
+            ) : null}
+            <div className="space-y-5">
+              {posts.map((p) => (
+                <PostCard key={p.id} post={p} />
+              ))}
+            </div>
+            {cursor ? (
+              <div className="mt-8 flex justify-center">
+                <button
+                  type="button"
+                  className="rounded-xl border border-slate-200 bg-white px-6 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-600"
+                  disabled={loadingMore}
+                  onClick={() => void loadMore()}
+                >
+                  {loadingMore ? "Loading…" : "Load more"}
+                </button>
+              </div>
+            ) : null}
+          </main>
+
+          <aside className="hidden lg:col-span-3 lg:block">
+            <div className="sticky top-24 rounded-2xl border border-slate-200/90 bg-white/90 p-5 shadow-soft dark:border-slate-800 dark:bg-slate-900/90">
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Tips</h2>
+              <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                Private posts are visible only to you. Public posts appear in everyone&apos;s feed.
+              </p>
+            </div>
+          </aside>
         </div>
       </div>
     </div>
