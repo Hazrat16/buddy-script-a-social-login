@@ -1,3 +1,4 @@
+import type { RequestHandler } from "express";
 import { Router } from "express";
 import { z } from "zod";
 import { Visibility } from "@prisma/client";
@@ -78,6 +79,78 @@ const upload = multer({
 
 export const postsRouter = Router();
 
+/** Current user's posts (public + private). Exported for `index.ts`; also used by `GET /me` on this router. */
+export const getMyPostsHandler: RequestHandler = asyncHandler(async (req, res) => {
+  const session = req.auth!;
+  const cur = decodeCursor(typeof req.query.cursor === "string" ? req.query.cursor : undefined);
+
+  const posts = await prisma.post.findMany({
+    where: {
+      AND: [
+        { authorId: session.sub },
+        ...(cur
+          ? [
+              {
+                OR: [
+                  { createdAt: { lt: cur.createdAt } },
+                  { AND: [{ createdAt: cur.createdAt }, { id: { lt: cur.id } }] },
+                ],
+              },
+            ]
+          : []),
+      ],
+    },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: PAGE + 1,
+    include: {
+      author: { select: { id: true, firstName: true, lastName: true } },
+      _count: { select: { likes: true, comments: true } },
+      likes: {
+        orderBy: { createdAt: "desc" },
+        take: LIKER_PREVIEW,
+        select: {
+          userId: true,
+          user: { select: { id: true, firstName: true, lastName: true } },
+        },
+      },
+    },
+  });
+
+  const slice = posts.length > PAGE ? posts.slice(0, PAGE) : posts;
+  const postIds = slice.map((p) => p.id);
+  const myLikes = await prisma.postLike.findMany({
+    where: { userId: session.sub, postId: { in: postIds } },
+    select: { postId: true },
+  });
+  const myLikeSet = new Set(myLikes.map((l) => l.postId));
+
+  let nextCursor: string | null = null;
+  if (posts.length > PAGE) {
+    const last = slice[PAGE - 1]!;
+    nextCursor = encodeCursor(last.createdAt, last.id);
+  }
+
+  const data = slice.map((p) => ({
+    id: p.id,
+    body: p.body,
+    imageUrl: p.imageUrl,
+    visibility: p.visibility,
+    createdAt: p.createdAt.toISOString(),
+    updatedAt: p.updatedAt.toISOString(),
+    author: p.author,
+    likeCount: p._count.likes,
+    commentCount: p._count.comments,
+    likedByMe: myLikeSet.has(p.id),
+    likedBy: p.likes.map((l) => ({
+      id: l.user.id,
+      firstName: l.user.firstName,
+      lastName: l.user.lastName,
+    })),
+  }));
+
+  res.json({ posts: data, nextCursor });
+});
+
 postsRouter.get("/", requireAuth, asyncHandler(async (req, res) => {
   const session = req.auth!;
   const cur = decodeCursor(typeof req.query.cursor === "string" ? req.query.cursor : undefined);
@@ -150,6 +223,9 @@ postsRouter.get("/", requireAuth, asyncHandler(async (req, res) => {
 
   res.json({ posts: data, nextCursor });
 }));
+
+/** Must be registered before any `/:postId` routes so `me` is not treated as an id. */
+postsRouter.get("/me", requireAuth, getMyPostsHandler);
 
 postsRouter.post("/", requireAuth, (req, res, next) => {
   const ct = req.headers["content-type"] || "";

@@ -3,6 +3,9 @@ export type PublicUser = {
   email?: string;
   firstName: string;
   lastName: string;
+  createdAt?: string;
+  postCount?: number;
+  commentCount?: number;
 };
 
 export function displayName(u: PublicUser) {

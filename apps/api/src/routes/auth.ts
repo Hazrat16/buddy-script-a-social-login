@@ -9,6 +9,7 @@ import {
   sessionCookieOptions,
 } from "../lib/session";
 import { requireAuth } from "../middleware/requireAuth";
+import { getMyPostsHandler } from "./posts";
 
 const registerSchema = z.object({
   firstName: z.string().trim().min(1).max(80),
@@ -97,14 +98,130 @@ authRouter.post("/logout", (_req, res) => {
   res.json({ ok: true });
 });
 
+/** More specific than `GET /me` — list current user’s posts. */
+authRouter.get("/me/posts", requireAuth, getMyPostsHandler);
+
 authRouter.get("/me", requireAuth, asyncHandler(async (req, res) => {
   const user = await prisma.user.findUnique({
     where: { id: req.auth!.sub },
-    select: { id: true, email: true, firstName: true, lastName: true },
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      createdAt: true,
+      _count: { select: { posts: true, comments: true } },
+    },
   });
   if (!user) {
     res.status(401).json({ user: null });
     return;
   }
-  res.json({ user });
+  res.json({
+    user: {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      createdAt: user.createdAt.toISOString(),
+      postCount: user._count.posts,
+      commentCount: user._count.comments,
+    },
+  });
+}));
+
+const profilePatchSchema = z.object({
+  firstName: z.string().trim().min(1).max(80),
+  lastName: z.string().trim().min(1).max(80),
+  email: z.string().trim().email().max(255).optional(),
+});
+
+authRouter.patch("/profile", requireAuth, asyncHandler(async (req, res) => {
+  const parsed = profilePatchSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Validation failed", details: parsed.error.flatten() });
+    return;
+  }
+
+  const session = req.auth!;
+  const { firstName, lastName, email: emailRaw } = parsed.data;
+
+  const existing = await prisma.user.findUnique({ where: { id: session.sub } });
+  if (!existing) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+
+  let nextEmail = existing.email;
+  if (emailRaw !== undefined) {
+    const lower = emailRaw.toLowerCase();
+    if (lower !== existing.email.toLowerCase()) {
+      const taken = await prisma.user.findUnique({ where: { email: lower } });
+      if (taken) {
+        res.status(409).json({ error: "Email already in use" });
+        return;
+      }
+      nextEmail = lower;
+    }
+  }
+
+  const user = await prisma.user.update({
+    where: { id: session.sub },
+    data: { firstName, lastName, email: nextEmail },
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      createdAt: true,
+      _count: { select: { posts: true, comments: true } },
+    },
+  });
+
+  const token = await createSessionToken({ sub: user.id, email: user.email });
+  res.cookie(SESSION_COOKIE, token, sessionCookieOptions);
+  res.json({
+    user: {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      createdAt: user.createdAt.toISOString(),
+      postCount: user._count.posts,
+      commentCount: user._count.comments,
+    },
+  });
+}));
+
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1).max(128),
+  newPassword: z.string().min(8).max(128),
+});
+
+authRouter.post("/change-password", requireAuth, asyncHandler(async (req, res) => {
+  const parsed = changePasswordSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Validation failed", details: parsed.error.flatten() });
+    return;
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: req.auth!.sub } });
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+
+  const ok = await verifyPassword(parsed.data.currentPassword, user.passwordHash);
+  if (!ok) {
+    res.status(401).json({ error: "Current password is incorrect" });
+    return;
+  }
+
+  const passwordHash = await hashPassword(parsed.data.newPassword);
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { passwordHash },
+  });
+
+  res.json({ ok: true });
 }));

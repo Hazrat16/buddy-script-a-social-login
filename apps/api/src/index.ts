@@ -4,9 +4,10 @@ import { Prisma } from "@prisma/client";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import path from "node:path";
+import { requireAuth } from "./middleware/requireAuth";
 import { authRouter } from "./routes/auth";
-import { postsRouter } from "./routes/posts";
 import { commentsRouter } from "./routes/comments";
+import { getMyPostsHandler, postsRouter } from "./routes/posts";
 
 const app = express();
 const PORT = Number(process.env.API_PORT) || 3001;
@@ -23,6 +24,9 @@ app.use(express.json());
 const uploadsDir = path.join(process.cwd(), "uploads");
 app.use("/uploads", express.static(uploadsDir));
 
+/** Full paths on the app so these are never missed by a sub-router or an old `dist` layout. */
+app.get("/api/posts/me", requireAuth, getMyPostsHandler);
+app.get("/api/auth/me/posts", requireAuth, getMyPostsHandler);
 app.use("/api/auth", authRouter);
 app.use("/api/posts", postsRouter);
 app.use("/api/comments", commentsRouter);

@@ -10,10 +10,10 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
-    return [
-      { source: "/api/:path*", destination: `${apiInternal}/api/:path*` },
-      { source: "/uploads/:path*", destination: `${apiInternal}/uploads/:path*` },
-    ];
+    return {
+      /** `/api/*` is proxied by `app/api/[[...path]]/route.ts` (see `lib/api-proxy.ts`). */
+      fallback: [{ source: "/uploads/:path*", destination: `${apiInternal}/uploads/:path*` }],
+    };
   },
 };
 
