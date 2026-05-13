@@ -5,6 +5,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
 import multer from "multer";
+import { asyncHandler } from "../lib/asyncHandler";
 import { prisma } from "../lib/prisma";
 import { requireAuth } from "../middleware/requireAuth";
 
@@ -61,7 +62,7 @@ const upload = multer({
 
 export const postsRouter = Router();
 
-postsRouter.get("/", requireAuth, async (req, res) => {
+postsRouter.get("/", requireAuth, asyncHandler(async (req, res) => {
   const session = req.auth!;
   const cur = decodeCursor(typeof req.query.cursor === "string" ? req.query.cursor : undefined);
 
@@ -131,7 +132,7 @@ postsRouter.get("/", requireAuth, async (req, res) => {
   }));
 
   res.json({ posts: data, nextCursor });
-});
+}));
 
 postsRouter.post("/", requireAuth, (req, res, next) => {
   const ct = req.headers["content-type"] || "";
@@ -140,7 +141,7 @@ postsRouter.post("/", requireAuth, (req, res, next) => {
   } else {
     next();
   }
-}, async (req, res) => {
+}, asyncHandler(async (req, res) => {
   const session = req.auth!;
   let body: string;
   let visibility: Visibility;
@@ -231,9 +232,9 @@ postsRouter.post("/", requireAuth, (req, res, next) => {
       })),
     },
   });
-});
+}));
 
-postsRouter.post("/:postId/like", requireAuth, async (req, res) => {
+postsRouter.post("/:postId/like", requireAuth, asyncHandler(async (req, res) => {
   const { postId } = req.params;
   const session = req.auth!;
 
@@ -282,9 +283,9 @@ postsRouter.post("/:postId/like", requireAuth, async (req, res) => {
       lastName: l.user.lastName,
     })),
   });
-});
+}));
 
-postsRouter.get("/:postId/comments", requireAuth, async (req, res) => {
+postsRouter.get("/:postId/comments", requireAuth, asyncHandler(async (req, res) => {
   const { postId } = req.params;
   const session = req.auth!;
 
@@ -360,9 +361,9 @@ postsRouter.get("/:postId/comments", requireAuth, async (req, res) => {
   roots.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 
   res.json({ comments: roots });
-});
+}));
 
-postsRouter.post("/:postId/comments", requireAuth, async (req, res) => {
+postsRouter.post("/:postId/comments", requireAuth, asyncHandler(async (req, res) => {
   const { postId } = req.params;
   const session = req.auth!;
 
@@ -431,4 +432,4 @@ postsRouter.post("/:postId/comments", requireAuth, async (req, res) => {
       replies: [],
     },
   });
-});
+}));

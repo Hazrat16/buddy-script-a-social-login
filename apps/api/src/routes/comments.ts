@@ -4,13 +4,14 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
 import multer from "multer";
+import { asyncHandler } from "../lib/asyncHandler";
 import { prisma } from "../lib/prisma";
 import { requireAuth } from "../middleware/requireAuth";
 
 const LIKER_PREVIEW = 30;
 
 export const commentsRouter = Router();
-commentsRouter.post("/:commentId/like", requireAuth, async (req, res) => {
+commentsRouter.post("/:commentId/like", requireAuth, asyncHandler(async (req, res) => {
   const { commentId } = req.params;
   const session = req.auth!;
 
@@ -54,4 +55,4 @@ commentsRouter.post("/:commentId/like", requireAuth, async (req, res) => {
       lastName: l.user.lastName,
     })),
   });
-});
+}));

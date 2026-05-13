@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
+import { asyncHandler } from "../lib/asyncHandler";
 import { prisma } from "../lib/prisma";
 import { hashPassword, verifyPassword } from "../lib/password";
 import {
@@ -23,7 +24,7 @@ const loginSchema = z.object({
 
 export const authRouter = Router();
 
-authRouter.post("/register", async (req, res) => {
+authRouter.post("/register", asyncHandler(async (req, res) => {
   const parsed = registerSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Validation failed", details: parsed.error.flatten() });
@@ -57,9 +58,9 @@ authRouter.post("/register", async (req, res) => {
       lastName: user.lastName,
     },
   });
-});
+}));
 
-authRouter.post("/login", async (req, res) => {
+authRouter.post("/login", asyncHandler(async (req, res) => {
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid credentials" });
@@ -89,14 +90,14 @@ authRouter.post("/login", async (req, res) => {
       lastName: user.lastName,
     },
   });
-});
+}));
 
 authRouter.post("/logout", (_req, res) => {
   res.cookie(SESSION_COOKIE, "", { httpOnly: true, path: "/", maxAge: 0 });
   res.json({ ok: true });
 });
 
-authRouter.get("/me", requireAuth, async (req, res) => {
+authRouter.get("/me", requireAuth, asyncHandler(async (req, res) => {
   const user = await prisma.user.findUnique({
     where: { id: req.auth!.sub },
     select: { id: true, email: true, firstName: true, lastName: true },
@@ -106,4 +107,4 @@ authRouter.get("/me", requireAuth, async (req, res) => {
     return;
   }
   res.json({ user });
-});
+}));

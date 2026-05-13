@@ -8,13 +8,15 @@ PostgreSQL is required. Easiest local option:
 
 ```bash
 cd /path/to/social-app
-docker compose up -d
+npm run docker:up
 npm install
 npm run db:push
 npm run dev
 ```
 
-`DATABASE_URL` in `apps/api/.env` must point at your Postgres instance (see `apps/api/.env.example`; defaults match `docker-compose.yml`).
+`DATABASE_URL` in `apps/api/.env` must point at your Postgres instance (see `apps/api/.env.example`). Compose maps the DB to **localhost:5433** so it does not clash with an existing Postgres on **5432**.
+
+If you already run Postgres on 5432 and want to use that instead of Docker, set `DATABASE_URL` to that server and skip `docker compose`.
 
 - **Web**: [http://localhost:3000](http://localhost:3000)  
 - **API**: [http://127.0.0.1:3001](http://127.0.0.1:3001) (used internally; the browser talks to `/api` and `/uploads` on port 3000 via Next.js rewrites)
@@ -28,7 +30,9 @@ The **database URL is only in the API** (`apps/api/.env`), not in the web app.
 | **`apps/api/.env`** | **`DATABASE_URL`** (Prisma), `AUTH_SECRET`, `API_PORT`, `WEB_ORIGIN` |
 | **`apps/web/.env`** | `AUTH_SECRET` (must match API), `API_INTERNAL_URL` (default `http://127.0.0.1:3001`) |
 
-**Example:** `DATABASE_URL="postgresql://postgres:postgres@localhost:5432/social_app?schema=public"` (see `docker-compose.yml`).
+**Example (Docker Compose in this repo):** `postgresql://postgres:postgres@localhost:5433/social_app?schema=public`
+
+**Example (Postgres already on your machine, default port):** `postgresql://USER:PASSWORD@localhost:5432/DBNAME?schema=public`
 
 Templates: `apps/api/.env.example`, `apps/web/.env.example`, root `.env.example`.
 
@@ -36,18 +40,31 @@ Templates: `apps/api/.env.example`, `apps/web/.env.example`, root `.env.example`
 
 | Script        | Description                                      |
 |---------------|--------------------------------------------------|
-| `npm run dev` | Starts API + Next dev servers together           |
+| `npm run dev` | Starts API, waits for port **3001**, then starts Next (avoids proxy errors) |
 | `npm run build` | Builds API (`tsc`) then Next (`next build`)  |
 | `npm run start` | Runs production API + Next (after build)     |
 | `npm run db:push` | Applies Prisma schema to Postgres (`apps/api`) |
-| `docker compose up -d` | Starts local Postgres (`docker-compose.yml`) |
+| `npm run docker:up` | Starts Postgres in Docker (port **5433** on host) |
+| `npm run docker:down` | Stops Postgres container |
 
 ## Layout
 
 ```
 apps/
   api/          Express, Prisma, JWT cookies, uploads/
-  web/          Next.js UI only (proxies /api and /uploads to API)
+  web/          Next.js UI only (proxies /api and `/uploads` to API)
 ```
+
+## Troubleshooting
+
+`npm run dev` starts the **API first**, runs a small **Node wait script** until port **3001** accepts connections, then starts Next — so `/api` rewrites do not hit a dead server.
+
+If login or register returns **503** with a message about **database tables**, Postgres is reachable but the schema was never applied — run **`npm run db:push`** from the repo root (after `docker:up` if you use Docker).
+
+If you still see **ECONNREFUSED** on `3001`, the API process exited (check the `[api]` lines): common causes are missing **`apps/api/.env`**, invalid **`DATABASE_URL`** (Postgres not running / wrong port), or **`AUTH_SECRET`** shorter than 32 characters. Run `npm run dev -w api` alone to see the stack trace.
+
+### Source maps (404)
+
+Bootstrap `.map` files are not shipped under `public/assets`; those 404s are harmless unless you need browser debugging of minified vendor JS.
 
 More detail: `apps/web/README.md`.
