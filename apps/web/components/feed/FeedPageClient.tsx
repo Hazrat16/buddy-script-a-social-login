@@ -7,6 +7,7 @@ import { FeedNav } from "./FeedNav";
 import { PostComposer } from "./PostComposer";
 import { PostCard } from "./PostCard";
 import type { FeedPost, PublicUser } from "./feed-types";
+import { FeedSkeleton } from "../ui/FeedSkeleton";
 
 const fetchOpts: RequestInit = { credentials: "include" };
 
@@ -15,7 +16,7 @@ export function FeedPageClient() {
   const [me, setMe] = useState<PublicUser | null>(null);
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [postsLoading, setPostsLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -54,7 +55,7 @@ export function FeedPageClient() {
         return;
       }
       setMe(ud.user);
-      setLoading(true);
+      setPostsLoading(true);
       const url = new URL("/api/posts", window.location.origin);
       const res = await fetch(url.toString(), fetchOpts);
       const data = await res.json();
@@ -62,14 +63,23 @@ export function FeedPageClient() {
         setPosts(data.posts as FeedPost[]);
         setCursor(data.nextCursor as string | null);
       }
-      if (!cancelled) setLoading(false);
+      if (!cancelled) setPostsLoading(false);
     })();
     return () => {
       cancelled = true;
     };
   }, [router]);
 
-  if (!me || loading) {
+  useEffect(() => {
+    if (postsLoading || posts.length === 0) return;
+    const id = window.location.hash.slice(1);
+    if (!id.startsWith("post-")) return;
+    requestAnimationFrame(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [postsLoading, posts]);
+
+  if (!me) {
     return (
       <div className="flex min-h-screen flex-col">
         <div className="h-14 animate-pulse border-b border-slate-200/80 bg-white/80 dark:border-slate-800 dark:bg-slate-950/80" />
@@ -115,12 +125,25 @@ export function FeedPageClient() {
                 {err}
               </p>
             ) : null}
-            <div className="space-y-5">
-              {posts.map((p) => (
-                <PostCard key={p.id} post={p} />
-              ))}
-            </div>
-            {cursor ? (
+
+            {postsLoading ? (
+              <FeedSkeleton />
+            ) : posts.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 px-6 py-14 text-center dark:border-slate-600 dark:bg-slate-900/40">
+                <p className="text-lg font-semibold text-slate-800 dark:text-slate-100">Your feed is quiet</p>
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                  Write a post above — public posts show for everyone; private ones stay yours.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-5">
+                {posts.map((p) => (
+                  <PostCard key={p.id} post={p} currentUser={me} />
+                ))}
+              </div>
+            )}
+
+            {!postsLoading && cursor ? (
               <div className="mt-8 flex justify-center">
                 <button
                   type="button"
@@ -139,6 +162,9 @@ export function FeedPageClient() {
               <h2 className="text-sm font-bold text-slate-900 dark:text-white">Tips</h2>
               <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
                 Private posts are visible only to you. Public posts appear in everyone&apos;s feed.
+              </p>
+              <p className="mt-4 text-xs text-slate-500 dark:text-slate-500">
+                <strong className="text-slate-700 dark:text-slate-300">Deep links:</strong> open a post&apos;s menu → Copy link, or tap Copy in the bar. Opening that URL scrolls to the post.
               </p>
             </div>
           </aside>

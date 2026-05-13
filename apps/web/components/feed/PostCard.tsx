@@ -1,11 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { CommentNode, FeedPost, PublicUser } from "./feed-types";
 import { displayName } from "./feed-types";
 import { formatRelativeTime, summarizeLikers } from "./format";
-
-const AV = "https://placehold.co/44x44/e0e7ff/4338ca?text=%E2%80%A2";
+import { UserAvatar } from "../ui/UserAvatar";
 
 const apiFetch: RequestInit = { credentials: "include" };
 
@@ -28,11 +27,13 @@ function CommentRow({
   postId,
   depth,
   onThreadChange,
+  viewer,
 }: {
   c: CommentNode;
   postId: string;
   depth: number;
   onThreadChange: () => Promise<void>;
+  viewer: PublicUser;
 }) {
   const [node, setNode] = useState(c);
   const [replyOpen, setReplyOpen] = useState(false);
@@ -80,7 +81,9 @@ function CommentRow({
   return (
     <div className={depth > 0 ? "ms-0 border-l-2 border-indigo-100 pl-4 dark:border-indigo-900/50 sm:ms-2" : ""}>
       <div className="flex gap-3 pt-3">
-        <img src={AV} alt="" className="mt-0.5 h-9 w-9 shrink-0 rounded-lg object-cover" width={36} height={36} />
+        <div className="mt-0.5 shrink-0">
+          <UserAvatar user={node.author} size={36} />
+        </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0">
             <span className="font-semibold text-slate-900 dark:text-white">{displayName(node.author)}</span>
@@ -120,12 +123,25 @@ function CommentRow({
 
           {replyOpen ? (
             <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3 dark:border-slate-700 dark:bg-slate-950/50">
-              <textarea
-                className="min-h-[72px] w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
-                placeholder="Write a reply"
-                value={replyBody}
-                onChange={(e) => setReplyBody(e.target.value)}
-              />
+              <div className="flex gap-2">
+                <UserAvatar user={viewer} size={32} />
+                <textarea
+                  className="min-h-[72px] w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                  placeholder="Write a reply"
+                  value={replyBody}
+                  onChange={(e) => setReplyBody(e.target.value)}
+                  onKeyDown={(e) => {
+                    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                      e.preventDefault();
+                      void sendReply();
+                    }
+                  }}
+                />
+              </div>
+              <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
+                <kbd className="rounded border border-slate-200 bg-white px-1 font-mono dark:border-slate-600 dark:bg-slate-800">⌘</kbd>+
+                <kbd className="rounded border border-slate-200 bg-white px-1 font-mono dark:border-slate-600 dark:bg-slate-800">Enter</kbd> send
+              </p>
               <div className="mt-2 flex justify-end gap-2">
                 <button
                   type="button"
@@ -148,18 +164,20 @@ function CommentRow({
         </div>
       </div>
       {node.replies.map((r) => (
-        <CommentRow key={r.id} c={r} postId={postId} depth={depth + 1} onThreadChange={onThreadChange} />
+        <CommentRow key={r.id} c={r} postId={postId} depth={depth + 1} onThreadChange={onThreadChange} viewer={viewer} />
       ))}
     </div>
   );
 }
 
-export function PostCard({ post }: { post: FeedPost }) {
+export function PostCard({ post, currentUser }: { post: FeedPost; currentUser: PublicUser }) {
   const [p, setP] = useState(post);
   const [menu, setMenu] = useState(false);
+  const [flash, setFlash] = useState<"copy" | "copy-fail" | null>(null);
   const [comments, setComments] = useState<CommentNode[]>([]);
   const [commentBody, setCommentBody] = useState("");
   const [busy, setBusy] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const reloadComments = useCallback(async () => {
     const res = await fetch(`/api/posts/${p.id}/comments`, apiFetch);
@@ -174,6 +192,15 @@ export function PostCard({ post }: { post: FeedPost }) {
   useEffect(() => {
     setP(post);
   }, [post]);
+
+  useEffect(() => {
+    if (!menu) return;
+    function onDoc(e: MouseEvent) {
+      if (!menuRef.current?.contains(e.target as Node)) setMenu(false);
+    }
+    document.addEventListener("click", onDoc);
+    return () => document.removeEventListener("click", onDoc);
+  }, [menu]);
 
   async function likePost() {
     setBusy(true);
@@ -209,6 +236,18 @@ export function PostCard({ post }: { post: FeedPost }) {
     }
   }
 
+  async function copyPostLink() {
+    const url = `${window.location.origin}/feed#post-${p.id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setFlash("copy");
+      setMenu(false);
+    } catch {
+      setFlash("copy-fail");
+    }
+    window.setTimeout(() => setFlash(null), 2200);
+  }
+
   const visLabel = p.visibility === "PUBLIC" ? "Public" : "Private";
   const visStyles =
     p.visibility === "PUBLIC"
@@ -216,11 +255,25 @@ export function PostCard({ post }: { post: FeedPost }) {
       : "bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200";
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white/95 shadow-soft dark:border-slate-800 dark:bg-slate-900/95">
+    <article
+      id={`post-${p.id}`}
+      className="scroll-mt-24 overflow-hidden rounded-2xl border border-slate-200/90 bg-white/95 shadow-soft dark:border-slate-800 dark:bg-slate-900/95"
+    >
+      {flash === "copy" ? (
+        <div className="border-b border-emerald-100 bg-emerald-50 px-4 py-2 text-center text-xs font-semibold text-emerald-800 dark:border-emerald-900/30 dark:bg-emerald-950/40 dark:text-emerald-200">
+          Link copied — share it anywhere.
+        </div>
+      ) : null}
+      {flash === "copy-fail" ? (
+        <div className="border-b border-amber-100 bg-amber-50 px-4 py-2 text-center text-xs font-semibold text-amber-900 dark:border-amber-900/30 dark:bg-amber-950/40 dark:text-amber-200">
+          Could not copy — try again or copy the URL from the address bar.
+        </div>
+      ) : null}
+
       <div className="border-b border-slate-100 px-5 py-4 dark:border-slate-800 sm:px-6">
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 gap-3">
-            <img src={AV} alt="" className="h-11 w-11 shrink-0 rounded-xl object-cover" width={44} height={44} />
+            <UserAvatar user={p.author} size={44} />
             <div className="min-w-0">
               <h3 className="truncate font-semibold text-slate-900 dark:text-white">{displayName(p.author)}</h3>
               <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
@@ -229,13 +282,16 @@ export function PostCard({ post }: { post: FeedPost }) {
               </p>
             </div>
           </div>
-          <div className="relative shrink-0">
+          <div className="relative shrink-0" ref={menuRef}>
             <button
               type="button"
               className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
               aria-expanded={menu}
               aria-label="Post options"
-              onClick={() => setMenu((v) => !v)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setMenu((v) => !v);
+              }}
             >
               <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                 <circle cx="12" cy="6" r="1.5" />
@@ -244,8 +300,17 @@ export function PostCard({ post }: { post: FeedPost }) {
               </svg>
             </button>
             {menu ? (
-              <div className="absolute right-0 z-10 mt-1 min-w-[140px] rounded-xl border border-slate-200 bg-white py-1 text-sm shadow-lg dark:border-slate-700 dark:bg-slate-900">
-                <span className="block px-3 py-2 text-slate-500 dark:text-slate-400">Post options</span>
+              <div className="absolute right-0 z-10 mt-1 min-w-[160px] rounded-xl border border-slate-200 bg-white py-1 text-sm shadow-lg dark:border-slate-700 dark:bg-slate-900">
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
+                  onClick={() => void copyPostLink()}
+                >
+                  <svg className="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Copy link
+                </button>
               </div>
             ) : null}
           </div>
@@ -261,14 +326,9 @@ export function PostCard({ post }: { post: FeedPost }) {
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-3 dark:border-slate-800 sm:px-6">
         <div className="flex -space-x-2">
           {p.likedBy.slice(0, 5).map((u, i) => (
-            <img
-              key={u.id + i}
-              src={`https://placehold.co/28x28/e0e7ff/4338ca?text=${encodeURIComponent((u.firstName[0] || "?").toUpperCase())}`}
-              alt=""
-              className="h-7 w-7 rounded-full border-2 border-white object-cover dark:border-slate-900"
-              width={28}
-              height={28}
-            />
+            <div key={`${u.id}-${i}`} className="ring-2 ring-white dark:ring-slate-900">
+              <UserAvatar user={u} size={28} shape="rounded-full" />
+            </div>
           ))}
           {p.likeCount > 5 ? (
             <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-slate-100 text-[10px] font-bold text-slate-600 dark:border-slate-900 dark:bg-slate-800 dark:text-slate-300">
@@ -311,16 +371,18 @@ export function PostCard({ post }: { post: FeedPost }) {
         </button>
         <button
           type="button"
-          className="hidden flex-1 items-center justify-center gap-2 py-3 text-sm font-semibold text-slate-400 sm:flex"
-          disabled
+          className="hidden flex-1 items-center justify-center gap-2 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800/80 sm:flex"
+          onClick={() => void copyPostLink()}
         >
-          ↗ Share
+          🔗 Copy
         </button>
       </div>
 
       <div className="border-t border-slate-100 bg-slate-50/50 px-5 py-4 dark:border-slate-800 dark:bg-slate-950/30 sm:px-6">
         <div className="flex gap-3">
-          <img src={AV} alt="" className="mt-1 h-8 w-8 shrink-0 rounded-lg object-cover" width={32} height={32} />
+          <div className="mt-1 shrink-0">
+            <UserAvatar user={currentUser} size={32} />
+          </div>
           <div className="min-w-0 flex-1">
             <textarea
               id={`comment-${p.id}`}
@@ -328,8 +390,18 @@ export function PostCard({ post }: { post: FeedPost }) {
               placeholder="Write a comment"
               value={commentBody}
               onChange={(e) => setCommentBody(e.target.value)}
+              onKeyDown={(e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                  e.preventDefault();
+                  void sendComment();
+                }
+              }}
             />
-            <div className="mt-2 flex justify-end">
+            <div className="mt-2 flex flex-wrap items-center justify-end gap-3">
+              <span className="mr-auto text-[10px] text-slate-400 dark:text-slate-500">
+                <kbd className="rounded border border-slate-200 bg-white px-1 font-mono dark:border-slate-600 dark:bg-slate-800">⌘</kbd>+
+                <kbd className="rounded border border-slate-200 bg-white px-1 font-mono dark:border-slate-600 dark:bg-slate-800">Enter</kbd>
+              </span>
               <button
                 type="button"
                 className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-50"
@@ -346,7 +418,7 @@ export function PostCard({ post }: { post: FeedPost }) {
       {comments.length > 0 ? (
         <div className="border-t border-slate-100 px-5 pb-4 pt-1 dark:border-slate-800 sm:px-6">
           {comments.map((c) => (
-            <CommentRow key={c.id} c={c} postId={p.id} depth={0} onThreadChange={reloadComments} />
+            <CommentRow key={c.id} c={c} postId={p.id} depth={0} onThreadChange={reloadComments} viewer={currentUser} />
           ))}
         </div>
       ) : null}

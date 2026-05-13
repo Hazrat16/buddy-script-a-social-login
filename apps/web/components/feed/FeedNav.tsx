@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { PublicUser } from "./feed-types";
 import { displayName } from "./feed-types";
-
-const PLACEHOLDER = "https://placehold.co/48x48/e0e7ff/4338ca?text=%E2%80%A2";
+import { UserAvatar } from "../ui/UserAvatar";
 
 export function FeedNav({ user }: { user: PublicUser }) {
   const router = useRouter();
@@ -92,7 +91,7 @@ export function FeedNav({ user }: { user: PublicUser }) {
               }}
               aria-expanded={open}
             >
-              <img src={PLACEHOLDER} alt="" className="h-9 w-9 rounded-xl object-cover" width={36} height={36} />
+              <UserAvatar user={user} size={36} />
               <span className="hidden max-w-[140px] truncate text-left text-sm font-medium text-slate-800 dark:text-slate-100 sm:block">
                 {displayName(user)}
               </span>

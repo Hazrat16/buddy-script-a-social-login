@@ -1,10 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { FeedPost, PublicUser } from "./feed-types";
 import { displayName } from "./feed-types";
+import { UserAvatar } from "../ui/UserAvatar";
 
-const AVATAR = "https://placehold.co/40x40/e0e7ff/4338ca?text=%E2%80%A2";
+const DRAFT_KEY = "buddy:composer-draft";
+const MAX_BODY = 8000;
 
 export function PostComposer({
   me,
@@ -18,18 +20,52 @@ export function PostComposer({
   const [file, setFile] = useState<File | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [draftRestored, setDraftRestored] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  async function submit() {
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const d = JSON.parse(raw) as { body?: unknown; visibility?: unknown };
+      if (typeof d.body === "string" && d.body.length > 0) setBody(d.body);
+      if (d.visibility === "PUBLIC" || d.visibility === "PRIVATE") setVisibility(d.visibility);
+      setDraftRestored(true);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      try {
+        if (!body.trim() && !file) {
+          localStorage.removeItem(DRAFT_KEY);
+          return;
+        }
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({ body, visibility }));
+      } catch {
+        /* quota */
+      }
+    }, 450);
+    return () => window.clearTimeout(t);
+  }, [body, visibility, file]);
+
+  const submit = useCallback(async () => {
     setErr(null);
-    if (!body.trim()) {
+    const trimmed = body.trim();
+    if (!trimmed) {
       setErr("Write something first.");
+      return;
+    }
+    if (trimmed.length > MAX_BODY) {
+      setErr(`Post is too long (max ${MAX_BODY} characters).`);
       return;
     }
     setLoading(true);
     try {
       const fd = new FormData();
-      fd.set("body", body.trim());
+      fd.set("body", trimmed);
       fd.set("visibility", visibility);
       if (file) fd.set("image", file);
       const res = await fetch("/api/posts", { method: "POST", body: fd, credentials: "include" });
@@ -41,23 +77,60 @@ export function PostComposer({
       onPosted(data.post as FeedPost);
       setBody("");
       setFile(null);
+      try {
+        localStorage.removeItem(DRAFT_KEY);
+      } catch {
+        /* */
+      }
       if (inputRef.current) inputRef.current.value = "";
     } finally {
       setLoading(false);
     }
-  }
+  }, [body, visibility, file, onPosted]);
+
+  const len = body.length;
+  const nearLimit = len > MAX_BODY - 200;
 
   return (
     <div className="mb-6 rounded-2xl border border-slate-200/90 bg-white/95 p-5 shadow-soft backdrop-blur dark:border-slate-800 dark:bg-slate-900/90 sm:p-6">
+      {draftRestored && body.trim() ? (
+        <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+          Restored a saved draft from this browser.
+        </p>
+      ) : null}
       <div className="flex gap-3">
-        <img src={AVATAR} alt="" className="mt-1 h-10 w-10 shrink-0 rounded-xl object-cover" width={40} height={40} />
+        <div className="mt-1 shrink-0">
+          <UserAvatar user={me} size={40} />
+        </div>
         <div className="min-w-0 flex-1">
           <textarea
             className="min-h-[100px] w-full resize-y rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15 dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-100 dark:focus:border-indigo-400"
             placeholder="What's on your mind?"
             value={body}
+            maxLength={MAX_BODY}
             onChange={(e) => setBody(e.target.value)}
+            onKeyDown={(e) => {
+              if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                e.preventDefault();
+                void submit();
+              }
+            }}
           />
+          <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <span className="text-slate-500 dark:text-slate-500">
+              <kbd className="rounded border border-slate-200 bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-800">
+                ⌘
+              </kbd>
+              <span className="mx-0.5">+</span>
+              <kbd className="rounded border border-slate-200 bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-800">
+                Enter
+              </kbd>
+              <span className="ml-1 hidden sm:inline">to post</span>
+            </span>
+            <span className={nearLimit ? "font-semibold text-amber-700 dark:text-amber-400" : "text-slate-500 dark:text-slate-500"}>
+              {len.toLocaleString()} / {MAX_BODY.toLocaleString()}
+            </span>
+          </div>
         </div>
       </div>
 
