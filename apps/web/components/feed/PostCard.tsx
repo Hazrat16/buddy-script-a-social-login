@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CommentNode, FeedPost, PublicUser } from "./feed-types";
 import { displayName } from "./feed-types";
-import { formatRelativeTime, summarizeLikers } from "./format";
+import { formatRelativeTime, isPostEdited, summarizeLikers } from "./format";
 import { UserAvatar } from "../ui/UserAvatar";
+import { EditPostModal } from "./EditPostModal";
 
 const apiFetch: RequestInit = { credentials: "include" };
 
@@ -170,9 +171,18 @@ function CommentRow({
   );
 }
 
-export function PostCard({ post, currentUser }: { post: FeedPost; currentUser: PublicUser }) {
+export function PostCard({
+  post,
+  currentUser,
+  onPostUpdated,
+}: {
+  post: FeedPost;
+  currentUser: PublicUser;
+  onPostUpdated?: (p: FeedPost) => void;
+}) {
   const [p, setP] = useState(post);
   const [menu, setMenu] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [flash, setFlash] = useState<"copy" | "copy-fail" | null>(null);
   const [comments, setComments] = useState<CommentNode[]>([]);
   const [commentBody, setCommentBody] = useState("");
@@ -254,6 +264,8 @@ export function PostCard({ post, currentUser }: { post: FeedPost; currentUser: P
       ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400"
       : "bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200";
 
+  const isAuthor = p.author.id === currentUser.id;
+
   return (
     <article
       id={`post-${p.id}`}
@@ -278,6 +290,9 @@ export function PostCard({ post, currentUser }: { post: FeedPost; currentUser: P
               <h3 className="truncate font-semibold text-slate-900 dark:text-white">{displayName(p.author)}</h3>
               <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                 <span>{formatRelativeTime(p.createdAt)}</span>
+                {isPostEdited(p.createdAt, p.updatedAt) ? (
+                  <span className="text-slate-400 dark:text-slate-500">· Edited</span>
+                ) : null}
                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${visStyles}`}>{visLabel}</span>
               </p>
             </div>
@@ -301,6 +316,21 @@ export function PostCard({ post, currentUser }: { post: FeedPost; currentUser: P
             </button>
             {menu ? (
               <div className="absolute right-0 z-10 mt-1 min-w-[160px] rounded-xl border border-slate-200 bg-white py-1 text-sm shadow-lg dark:border-slate-700 dark:bg-slate-900">
+                {isAuthor ? (
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
+                    onClick={() => {
+                      setEditOpen(true);
+                      setMenu(false);
+                    }}
+                  >
+                    <svg className="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                    Edit post
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   className="flex w-full items-center gap-2 px-3 py-2 text-left font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
@@ -421,6 +451,18 @@ export function PostCard({ post, currentUser }: { post: FeedPost; currentUser: P
             <CommentRow key={c.id} c={c} postId={p.id} depth={0} onThreadChange={reloadComments} viewer={currentUser} />
           ))}
         </div>
+      ) : null}
+      {editOpen ? (
+        <EditPostModal
+          open={editOpen}
+          onClose={() => setEditOpen(false)}
+          post={p}
+          currentUser={currentUser}
+          onSaved={(next) => {
+            setP(next);
+            onPostUpdated?.(next);
+          }}
+        />
       ) : null}
     </article>
   );

@@ -15,6 +15,7 @@ export type FeedPost = {
   imageUrl: string | null;
   visibility: "PUBLIC" | "PRIVATE";
   createdAt: string;
+  updatedAt?: string;
   author: PublicUser;
   likeCount: number;
   commentCount: number;

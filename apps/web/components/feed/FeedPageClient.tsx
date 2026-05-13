@@ -138,7 +138,12 @@ export function FeedPageClient() {
             ) : (
               <div className="space-y-5">
                 {posts.map((p) => (
-                  <PostCard key={p.id} post={p} currentUser={me} />
+                  <PostCard
+                    key={p.id}
+                    post={p}
+                    currentUser={me}
+                    onPostUpdated={(next) => setPosts((prev) => prev.map((x) => (x.id === next.id ? next : x)))}
+                  />
                 ))}
               </div>
             )}

@@ -12,6 +12,12 @@ export function formatRelativeTime(iso: string) {
   return d.toLocaleDateString();
 }
 
+/** True if the post was edited after publish (updatedAt from Prisma @updatedAt). */
+export function isPostEdited(createdAt: string, updatedAt?: string) {
+  if (!updatedAt) return false;
+  return new Date(updatedAt).getTime() - new Date(createdAt).getTime() > 1500;
+}
+
 export function summarizeLikers(
   likers: { firstName: string; lastName: string }[],
   total: number,

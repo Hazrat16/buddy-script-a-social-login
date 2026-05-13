@@ -34,6 +34,7 @@ model Post {
   imageUrl   String?
   visibility Visibility @default(PUBLIC)
   createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @default(now()) @updatedAt
 
   likes    PostLike[]
   comments Comment[]

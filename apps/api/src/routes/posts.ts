@@ -24,6 +24,22 @@ const commentSchema = z.object({
   parentId: z.string().cuid().optional().nullable(),
 });
 
+const jsonPatchSchema = createSchema.extend({
+  removeImage: z.boolean().optional(),
+});
+
+async function unlinkUploadsFile(imageUrl: string | null) {
+  if (!imageUrl?.startsWith("/uploads/")) return;
+  const base = path.basename(imageUrl);
+  if (!base || base.includes("..") || base.includes("/")) return;
+  const fp = path.join(process.cwd(), "uploads", base);
+  try {
+    await fs.unlink(fp);
+  } catch {
+    /* file missing */
+  }
+}
+
 function decodeCursor(cursor: string | null | undefined): { createdAt: Date; id: string } | null {
   if (!cursor) return null;
   try {
@@ -120,6 +136,7 @@ postsRouter.get("/", requireAuth, asyncHandler(async (req, res) => {
     imageUrl: p.imageUrl,
     visibility: p.visibility,
     createdAt: p.createdAt.toISOString(),
+    updatedAt: p.updatedAt.toISOString(),
     author: p.author,
     likeCount: p._count.likes,
     commentCount: p._count.comments,
@@ -221,6 +238,7 @@ postsRouter.post("/", requireAuth, (req, res, next) => {
       imageUrl: post.imageUrl,
       visibility: post.visibility,
       createdAt: post.createdAt.toISOString(),
+      updatedAt: post.updatedAt.toISOString(),
       author: post.author,
       likeCount: post._count.likes,
       commentCount: post._count.comments,
@@ -233,6 +251,150 @@ postsRouter.post("/", requireAuth, (req, res, next) => {
     },
   });
 }));
+
+postsRouter.patch(
+  "/:postId",
+  requireAuth,
+  (req, res, next) => {
+    const ct = req.headers["content-type"] || "";
+    if (ct.includes("multipart/form-data")) {
+      upload.single("image")(req, res, next);
+    } else {
+      next();
+    }
+  },
+  asyncHandler(async (req, res) => {
+    const { postId } = req.params;
+    const session = req.auth!;
+
+    const owned = await prisma.post.findFirst({
+      where: { id: postId, authorId: session.sub },
+      select: { id: true, imageUrl: true },
+    });
+    if (!owned) {
+      res.status(404).json({ error: "Post not found" });
+      return;
+    }
+
+    const ct = req.headers["content-type"] || "";
+    let bodyText: string;
+    let visibility: Visibility;
+    let removeImage = false;
+    let newImageUrl: string | null = null;
+
+    if (ct.includes("multipart/form-data")) {
+      const b = req.body?.body;
+      const v = req.body?.visibility;
+      const ri = req.body?.removeImage;
+      const parsed = createSchema.safeParse({
+        body: typeof b === "string" ? b : "",
+        visibility: typeof v === "string" ? v : "",
+      });
+      if (!parsed.success) {
+        res.status(400).json({ error: "Invalid post" });
+        return;
+      }
+      bodyText = parsed.data.body;
+      visibility = parsed.data.visibility as Visibility;
+      removeImage = ri === "true" || ri === true || ri === "1";
+
+      const file = req.file;
+      if (file && file.size > 0) {
+        const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+        if (!allowed.includes(file.mimetype)) {
+          res.status(400).json({ error: "Unsupported image type" });
+          return;
+        }
+        const ext =
+          file.mimetype === "image/png"
+            ? "png"
+            : file.mimetype === "image/webp"
+              ? "webp"
+              : file.mimetype === "image/gif"
+                ? "gif"
+                : "jpg";
+        const name = `${crypto.randomUUID()}.${ext}`;
+        const uploadDir = path.join(process.cwd(), "uploads");
+        await fs.mkdir(uploadDir, { recursive: true });
+        await fs.writeFile(path.join(uploadDir, name), file.buffer);
+        newImageUrl = `/uploads/${name}`;
+      }
+    } else {
+      const parsed = jsonPatchSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ error: "Invalid post" });
+        return;
+      }
+      bodyText = parsed.data.body;
+      visibility = parsed.data.visibility as Visibility;
+      removeImage = parsed.data.removeImage === true;
+    }
+
+    if (removeImage) {
+      await unlinkUploadsFile(owned.imageUrl);
+    } else if (newImageUrl) {
+      await unlinkUploadsFile(owned.imageUrl);
+    }
+
+    let imageUrlUpdate: string | null | undefined;
+    if (removeImage) {
+      imageUrlUpdate = null;
+    } else if (newImageUrl) {
+      imageUrlUpdate = newImageUrl;
+    } else {
+      imageUrlUpdate = undefined;
+    }
+
+    await prisma.post.update({
+      where: { id: postId },
+      data: {
+        body: bodyText,
+        visibility,
+        ...(imageUrlUpdate !== undefined ? { imageUrl: imageUrlUpdate } : {}),
+      },
+    });
+
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      include: {
+        author: { select: { id: true, firstName: true, lastName: true } },
+        _count: { select: { likes: true, comments: true } },
+        likes: {
+          orderBy: { createdAt: "desc" },
+          take: LIKER_PREVIEW,
+          select: {
+            userId: true,
+            user: { select: { id: true, firstName: true, lastName: true } },
+          },
+        },
+      },
+    });
+
+    const myLike = await prisma.postLike.findUnique({
+      where: { postId_userId: { postId, userId: session.sub } },
+    });
+
+    res.json({
+      post: {
+        id: post!.id,
+        body: post!.body,
+        imageUrl: post!.imageUrl,
+        visibility: post!.visibility,
+        createdAt: post!.createdAt.toISOString(),
+        updatedAt: post!.updatedAt.toISOString(),
+        author: post!.author,
+        likeCount: post!._count.likes,
+        commentCount: post!._count.comments,
+        likedByMe: !!myLike,
+        likedBy: post!.likes.map((l) => ({
+          id: l.user.id,
+          firstName: l.user.firstName,
+          lastName: l.user.lastName,
+        })),
+      },
+    });
+  }),
+);
 
 postsRouter.post("/:postId/like", requireAuth, asyncHandler(async (req, res) => {
   const { postId } = req.params;
