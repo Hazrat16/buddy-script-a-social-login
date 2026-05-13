@@ -5,7 +5,8 @@ import { jwtVerify } from "jose";
 import { SESSION_COOKIE } from "@/lib/session-cookie";
 
 export async function middleware(request: NextRequest) {
-  if (!request.nextUrl.pathname.startsWith("/feed")) {
+  const path = request.nextUrl.pathname;
+  if (!path.startsWith("/feed") && !path.startsWith("/profile")) {
     return NextResponse.next();
   }
 
@@ -30,5 +31,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/feed"],
+  matcher: ["/feed", "/profile"],
 };

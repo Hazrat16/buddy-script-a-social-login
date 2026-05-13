@@ -269,7 +269,7 @@ export function PostCard({
   return (
     <article
       id={`post-${p.id}`}
-      className="scroll-mt-24 overflow-hidden rounded-2xl border border-slate-200/90 bg-white/95 shadow-soft dark:border-slate-800 dark:bg-slate-900/95"
+      className="scroll-mt-24 rounded-2xl border border-slate-200/90 bg-white/95 shadow-soft dark:border-slate-800 dark:bg-slate-900/95"
     >
       {flash === "copy" ? (
         <div className="border-b border-emerald-100 bg-emerald-50 px-4 py-2 text-center text-xs font-semibold text-emerald-800 dark:border-emerald-900/30 dark:bg-emerald-950/40 dark:text-emerald-200">
@@ -297,12 +297,21 @@ export function PostCard({
               </p>
             </div>
           </div>
-          <div className="relative shrink-0" ref={menuRef}>
+          <div className="relative flex shrink-0 items-center gap-1" ref={menuRef}>
+            {isAuthor ? (
+              <button
+                type="button"
+                className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
+                onClick={() => setEditOpen(true)}
+              >
+                Edit
+              </button>
+            ) : null}
             <button
               type="button"
               className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
               aria-expanded={menu}
-              aria-label="Post options"
+              aria-label="More post options"
               onClick={(e) => {
                 e.stopPropagation();
                 setMenu((v) => !v);
@@ -315,7 +324,7 @@ export function PostCard({
               </svg>
             </button>
             {menu ? (
-              <div className="absolute right-0 z-10 mt-1 min-w-[160px] rounded-xl border border-slate-200 bg-white py-1 text-sm shadow-lg dark:border-slate-700 dark:bg-slate-900">
+              <div className="absolute right-0 top-full z-50 mt-1 min-w-[180px] rounded-xl border border-slate-200 bg-white py-1 text-sm shadow-xl dark:border-slate-700 dark:bg-slate-900">
                 {isAuthor ? (
                   <button
                     type="button"

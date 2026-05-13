@@ -8,6 +8,7 @@ import { PostComposer } from "./PostComposer";
 import { PostCard } from "./PostCard";
 import type { FeedPost, PublicUser } from "./feed-types";
 import { FeedSkeleton } from "../ui/FeedSkeleton";
+import { ProfileMiniCard } from "./ProfileMiniCard";
 
 const fetchOpts: RequestInit = { credentials: "include" };
 
@@ -98,9 +99,13 @@ export function FeedPageClient() {
       <FeedNav user={me} />
 
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+        <div className="mb-6 lg:hidden">
+          <ProfileMiniCard user={me} />
+        </div>
         <div className="grid gap-8 lg:grid-cols-12">
           <aside className="hidden lg:col-span-3 lg:block">
             <div className="sticky top-24 space-y-4">
+              <ProfileMiniCard user={me} />
               <div className="rounded-2xl border border-slate-200/90 bg-white/90 p-5 shadow-soft dark:border-slate-800 dark:bg-slate-900/90">
                 <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Explore</h2>
                 <ul className="mt-4 space-y-1">
@@ -111,6 +116,17 @@ export function FeedPageClient() {
                     >
                       <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
                       Feed home
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/profile"
+                      className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                    >
+                      <svg className="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      Profile
                     </Link>
                   </li>
                 </ul>
