@@ -24,3 +24,15 @@ export function isThisVercelAppHost(base: string): boolean {
     return false;
   }
 }
+
+/**
+ * Real Vercel build + serverless runtime set `VERCEL_URL`. A stray `VERCEL=1` in a local shell does not,
+ * so we do not treat that as “deployed on Vercel” (fixes broken local `next dev` / `next build`).
+ */
+export function isVercelProductionDeploy(): boolean {
+  return (
+    process.env.NODE_ENV === "production" &&
+    Boolean(process.env.VERCEL) &&
+    Boolean(process.env.VERCEL_URL?.trim())
+  );
+}

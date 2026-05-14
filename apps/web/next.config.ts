@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-import { isThisVercelAppHost, readApiBackendBaseFromEnv } from "./lib/api-backend-env";
+import { isThisVercelAppHost, isVercelProductionDeploy, readApiBackendBaseFromEnv } from "./lib/api-backend-env";
 
 /** Build-time: set `BACKEND_API_URL` (or `NEXT_API_BASE_URL`) on Vercel for "Build" so `/uploads` rewrites and image hosts match production. */
 const resolved = readApiBackendBaseFromEnv();
@@ -11,7 +11,7 @@ if (resolved && isThisVercelAppHost(resolved)) {
 }
 const apiInternal =
   resolved ||
-  (process.env.VERCEL
+  (isVercelProductionDeploy()
     ? (() => {
         throw new Error(
           "BACKEND_API_URL or NEXT_API_BASE_URL is required on Vercel. Add it in Project → Environment Variables and enable it for **Building** (and each runtime environment), then redeploy. Use your Railway / Express URL, not the Vercel site URL.",

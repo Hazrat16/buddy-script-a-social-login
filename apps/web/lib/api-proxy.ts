@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { isThisVercelAppHost, readApiBackendBaseFromEnv } from "@/lib/api-backend-env";
+import { isThisVercelAppHost, isVercelProductionDeploy, readApiBackendBaseFromEnv } from "@/lib/api-backend-env";
 
 /**
  * Resolve at **request time** (not module load). See `lib/api-backend-env.ts` for env names.
@@ -10,7 +10,7 @@ import { isThisVercelAppHost, readApiBackendBaseFromEnv } from "@/lib/api-backen
 function getBackendBase(): string | null {
   const fromEnv = readApiBackendBaseFromEnv();
   if (fromEnv) return fromEnv;
-  if (process.env.VERCEL) {
+  if (isVercelProductionDeploy()) {
     return null;
   }
   return "http://127.0.0.1:3001";
@@ -48,7 +48,7 @@ export async function proxyApiRequest(request: NextRequest): Promise<Response> {
       {
         error: "API base URL is not configured",
         hint:
-          "On Vercel, set BACKEND_API_URL (recommended) or NEXT_API_BASE_URL to your **Express** origin (e.g. https://….up.railway.app), **not** your Vercel site URL. Enable for Production, Preview, and Build, then redeploy.",
+          "On Vercel production, set BACKEND_API_URL or NEXT_API_BASE_URL to your **Express** origin (e.g. https://….up.railway.app), **not** your Vercel site URL. Enable for Production, Preview, and Build, then redeploy.",
       },
       { status: 503 },
     );
