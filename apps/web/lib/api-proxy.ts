@@ -91,23 +91,29 @@ export async function proxyApiRequest(request: NextRequest): Promise<Response> {
   const target = `${backend}${request.nextUrl.pathname}${request.nextUrl.search}`;
   const headers = forwardHeaders(request);
 
-  const init: RequestInit & { duplex?: "half" } = {
+  /**
+   * Buffer the incoming body for the upstream `fetch`. Forwarding `request.body` as a
+   * `ReadableStream` + `duplex: "half"` often breaks on Vercel’s runtime (undici:
+   * "expected non-null body source"). `ArrayBuffer` needs no `duplex` and works for JSON + multipart.
+   */
+  let upstreamBody: ArrayBuffer | undefined;
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    upstreamBody = await request.arrayBuffer();
+    if (upstreamBody.byteLength > 0) {
+      headers.delete("content-length");
+      headers.delete("transfer-encoding");
+    }
+  }
+
+  const init: RequestInit = {
     method: request.method,
     headers,
     redirect: "manual",
     cache: "no-store",
     /** Railway cold starts can exceed Vercel Hobby’s default ~10s wall; `maxDuration` on the route helps on paid tiers. */
     signal: AbortSignal.timeout(55_000),
+    ...(upstreamBody !== undefined && upstreamBody.byteLength > 0 ? { body: upstreamBody } : {}),
   };
-
-  if (request.method !== "GET" && request.method !== "HEAD") {
-    const body = request.body;
-    /** `duplex: "half"` is only valid with a real stream; OPTIONS / DELETE-without-body leave `body` null and undici throws "expected non-null body source". */
-    if (body != null) {
-      init.body = body;
-      init.duplex = "half";
-    }
-  }
 
   try {
     const res = await fetch(target, init);
