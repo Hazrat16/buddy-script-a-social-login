@@ -28,8 +28,17 @@ export function AuthenticatedBuddyLayout({ children }: { children: React.ReactNo
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const u = await fetch("/api/auth/me", fetchOpts);
-      const ud = await u.json();
+      const load = async () => {
+        const u = await fetch("/api/auth/me", fetchOpts);
+        return { u, ud: (await u.json()) as { user?: PublicUser } };
+      };
+      let { u, ud } = await load();
+      if (cancelled) return;
+      if ((!u.ok || !ud.user) && u.status === 401) {
+        await new Promise((r) => setTimeout(r, 200));
+        if (cancelled) return;
+        ({ u, ud } = await load());
+      }
       if (cancelled) return;
       if (!u.ok || !ud.user) {
         router.replace("/login");
