@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import type { PublicUser } from "@/components/feed/feed-types";
 import { BuddyAppFrame } from "@/components/feed/buddy/BuddyAppFrame";
 import { useBuddyFeedAssets } from "@/components/feed/buddy/useBuddyFeedAssets";
+import { ComingSoonProvider } from "@/components/ui/ComingSoonProvider";
 
 const fetchOpts: RequestInit = { credentials: "include" };
 
@@ -55,26 +56,30 @@ export function AuthenticatedBuddyLayout({ children }: { children: React.ReactNo
   if (isFeedRoute) {
     return (
       <BuddyUserContext.Provider value={me}>
-        <BuddyAppFrame user={me}>{children}</BuddyAppFrame>
+        <ComingSoonProvider>
+          <BuddyAppFrame user={me}>{children}</BuddyAppFrame>
+        </ComingSoonProvider>
       </BuddyUserContext.Provider>
     );
   }
 
   return (
     <BuddyUserContext.Provider value={me}>
-      <BuddyAppFrame user={me}>
-        <div className="container _custom_container">
-          <div className="_layout_inner_wrap">
-            <div className="row">
-              <div className="col-xl-12 col-lg-12 col-md-12 col-sm-12">
-                <div className="_layout_middle_wrap">
-                  <div className="_layout_middle_inner _padd_t24 _padd_b24">{children}</div>
+      <ComingSoonProvider>
+        <BuddyAppFrame user={me}>
+          <div className="container _custom_container">
+            <div className="_layout_inner_wrap">
+              <div className="row">
+                <div className="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                  <div className="_layout_middle_wrap">
+                    <div className="_layout_middle_inner _padd_t24 _padd_b24">{children}</div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </BuddyAppFrame>
+        </BuddyAppFrame>
+      </ComingSoonProvider>
     </BuddyUserContext.Provider>
   );
 }

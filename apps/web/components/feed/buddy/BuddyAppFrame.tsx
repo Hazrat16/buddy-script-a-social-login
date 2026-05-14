@@ -7,6 +7,7 @@ import type { PublicUser } from "../feed-types";
 import { displayName } from "../feed-types";
 import { formatRelativeTime } from "../format";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { useComingSoon } from "@/components/ui/ComingSoonProvider";
 import {
   loadNotifications,
   markAllNotificationsRead,
@@ -59,6 +60,7 @@ export function BuddyAppFrame({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { showComingSoon } = useComingSoon();
   const [dark, setDark] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifSubOpen, setNotifSubOpen] = useState(false);
@@ -152,7 +154,9 @@ export function BuddyAppFrame({
                   </Link>
                 </li>
                 <li className="_notification_item">
-                  <span className="_notification_link">Open Notifications</span>
+                  <button type="button" className="_notification_link" onClick={() => showComingSoon("Notifications inbox")}>
+                    Open Notifications
+                  </button>
                 </li>
               </ul>
             </div>
@@ -160,10 +164,10 @@ export function BuddyAppFrame({
         </div>
         <div className="_notifications_drop_box">
           <div className="_notifications_drop_btn_grp">
-            <button type="button" className="_notifications_btn_link">
+            <button type="button" className="_notifications_btn_link" onClick={() => showComingSoon("Notification filters")}>
               All
             </button>
-            <button type="button" className="_notifications_btn_link1">
+            <button type="button" className="_notifications_btn_link1" onClick={() => showComingSoon("Notification filters")}>
               Unread
             </button>
           </div>

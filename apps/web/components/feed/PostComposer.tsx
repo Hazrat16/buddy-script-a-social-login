@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useComingSoon } from "@/components/ui/ComingSoonProvider";
 import type { FeedPost, PublicUser } from "./feed-types";
 import { displayName } from "./feed-types";
 import { UserAvatar } from "../ui/UserAvatar";
@@ -33,6 +34,7 @@ export function PostComposer({
   const [loading, setLoading] = useState(false);
   const [draftRestored, setDraftRestored] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { showComingSoon } = useComingSoon();
 
   useEffect(() => {
     try {
@@ -111,7 +113,12 @@ export function PostComposer({
         </button>
       </div>
       <div className="_feed_inner_text_area_bottom_video _feed_common">
-        <button type="button" className="_feed_inner_text_area_bottom_photo_link" disabled title="Coming soon">
+        <button
+          type="button"
+          className="_feed_inner_text_area_bottom_photo_link"
+          title="Video posts are coming soon"
+          onClick={() => showComingSoon("Video posts")}
+        >
           <span className="_feed_inner_text_area_bottom_photo_iamge _mar_img">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="24" fill="none" viewBox="0 0 22 24">
               <path
@@ -124,7 +131,12 @@ export function PostComposer({
         </button>
       </div>
       <div className="_feed_inner_text_area_bottom_event _feed_common">
-        <button type="button" className="_feed_inner_text_area_bottom_photo_link" disabled title="Coming soon">
+        <button
+          type="button"
+          className="_feed_inner_text_area_bottom_photo_link"
+          title="Events are coming soon"
+          onClick={() => showComingSoon("Events")}
+        >
           <span className="_feed_inner_text_area_bottom_photo_iamge _mar_img">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="24" fill="none" viewBox="0 0 22 24">
               <path
@@ -137,7 +149,12 @@ export function PostComposer({
         </button>
       </div>
       <div className="_feed_inner_text_area_bottom_article _feed_common">
-        <button type="button" className="_feed_inner_text_area_bottom_photo_link" disabled title="Coming soon">
+        <button
+          type="button"
+          className="_feed_inner_text_area_bottom_photo_link"
+          title="Articles are coming soon"
+          onClick={() => showComingSoon("Articles")}
+        >
           <span className="_feed_inner_text_area_bottom_photo_iamge _mar_img">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="20" fill="none" viewBox="0 0 18 20">
               <path
@@ -329,8 +346,8 @@ export function PostComposer({
           <button
             type="button"
             title="Video posts are coming soon"
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2 text-sm font-medium text-slate-400 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-500"
-            disabled
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
+            onClick={() => showComingSoon("Video posts")}
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -340,8 +357,8 @@ export function PostComposer({
           <button
             type="button"
             title="Events are coming soon"
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2 text-sm font-medium text-slate-400 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-500"
-            disabled
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
+            onClick={() => showComingSoon("Events")}
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -351,8 +368,8 @@ export function PostComposer({
           <button
             type="button"
             title="Articles are coming soon"
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2 text-sm font-medium text-slate-400 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-500"
-            disabled
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
+            onClick={() => showComingSoon("Articles")}
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />

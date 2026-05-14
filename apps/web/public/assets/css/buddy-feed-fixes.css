@@ -292,7 +292,7 @@ body.buddy-feed-active ._comment_textarea {
   box-sizing: border-box;
 }
 
-/* Reaction bar: primary + picker on one row (no floating caret) */
+/* Reaction bar: primary reaction; full reaction picker opens on hover */
 body.buddy-feed-active ._buddy_timeline_reaction_primary {
   position: relative;
   display: flex;
@@ -306,25 +306,6 @@ body.buddy-feed-active ._buddy_timeline_reaction_primary {
 body.buddy-feed-active ._buddy_timeline_reaction_primary > ._feed_inner_timeline_reaction_emoji {
   flex: 1 1 auto;
   margin-right: 0 !important;
-}
-
-body.buddy-feed-active ._buddy_reaction_picker_toggle {
-  flex: 0 0 36px !important;
-  width: 36px !important;
-  min-width: 36px !important;
-  height: 48px !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  line-height: 1;
-  color: rgba(0, 0, 0, 0.45);
-}
-
-body.buddy-feed-active ._layout_main_wrapper._dark_wrapper ._buddy_reaction_picker_toggle {
-  color: rgba(255, 255, 255, 0.55);
 }
 
 body.buddy-feed-active ._feed_inner_timeline_reaction {
@@ -344,10 +325,473 @@ body.buddy-feed-active ._feed_inner_timeline_total_reacts_txt {
   gap: 12px;
 }
 
+/* Facepile: overlapping avatars + blue overflow (Buddy stats row) */
+body.buddy-feed-active ._buddy_fb_facepile {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 2px 0 0;
+  cursor: default;
+}
+
+body.buddy-feed-active ._buddy_fb_facepile_item {
+  position: relative;
+  flex: 0 0 auto;
+  margin-left: -11px;
+  padding: 0;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-sizing: content-box;
+  background: #fff;
+  line-height: 0;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+body.buddy-feed-active ._buddy_fb_facepile_item:first-child {
+  margin-left: 0;
+}
+
+body.buddy-feed-active ._buddy_fb_facepile_overflow {
+  position: relative;
+  flex: 0 0 auto;
+  margin-left: -11px;
+  min-width: 32px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  box-sizing: border-box;
+  background: #1877f2;
+  border: 2px solid #fff;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+body.buddy-feed-active ._layout_main_wrapper._dark_wrapper ._buddy_fb_facepile_item {
+  border-color: #242526;
+  background: #242526;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+body.buddy-feed-active ._layout_main_wrapper._dark_wrapper ._buddy_fb_facepile_overflow {
+  border-color: #242526;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
 body.buddy-feed-active ._feed_inner_timeline_total_reacts_para1,
 body.buddy-feed-active ._feed_inner_timeline_total_reacts_para2 {
   margin: 0 !important;
   display: flex;
   align-items: center;
   line-height: 1.2;
+}
+
+/* Facebook-style post footer: stats, reaction row icons, pill composer, comment bubbles */
+/* Comment count control must NOT use `_feed_timeline_dropdown_link` — in main.css,
+   `._feed_timeline_dropdown_link span` adds blue circular pills to every child span. */
+body.buddy-feed-active ._buddy_fb_stat_comment_btn {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.2;
+  cursor: pointer;
+  text-align: left;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+body.buddy-feed-active ._buddy_fb_stat_comment_btn ._buddy_fb_stat_num,
+body.buddy-feed-active ._buddy_fb_stat_comment_btn ._buddy_fb_stat_lbl {
+  display: inline;
+  padding: 0;
+  margin: 0;
+  border-radius: 0;
+  background: none !important;
+}
+
+body.buddy-feed-active ._buddy_fb_stat_num {
+  font-weight: 600;
+  color: #050505;
+}
+
+body.buddy-feed-active ._buddy_fb_stat_lbl {
+  font-weight: 400;
+  color: #65676b;
+  margin-left: 0.2em;
+}
+
+body.buddy-feed-active ._layout_main_wrapper._dark_wrapper ._buddy_fb_stat_num {
+  color: #e4e6eb;
+}
+
+body.buddy-feed-active ._layout_main_wrapper._dark_wrapper ._buddy_fb_stat_lbl {
+  color: rgba(228, 230, 235, 0.55);
+}
+
+body.buddy-feed-active ._buddy_fb_stat_share {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+body.buddy-feed-active ._buddy_fb_stat_share ._buddy_fb_stat_num,
+body.buddy-feed-active ._buddy_fb_stat_share ._buddy_fb_stat_lbl {
+  display: inline;
+}
+
+body.buddy-feed-active ._feed_inner_timeline_reaction_emoji._feed_reaction_active ._feed_inner_timeline_reaction_link {
+  font-weight: 600;
+}
+
+body.buddy-feed-active ._buddy_fb_primary_reaction_inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+body.buddy-feed-active ._buddy_fb_reaction_link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+
+body.buddy-feed-active ._buddy_fb_reaction_link > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+body.buddy-feed-active ._feed_inner_timeline_reaction ._reaction_svg {
+  flex: 0 0 auto;
+  color: #050505;
+}
+
+body.buddy-feed-active ._feed_inner_timeline_reaction ._reaction_svg path {
+  stroke: currentColor;
+}
+
+body.buddy-feed-active ._layout_main_wrapper._dark_wrapper ._feed_inner_timeline_reaction ._reaction_svg {
+  color: #e4e6eb;
+}
+
+body.buddy-feed-active ._feed_inner_timeline_cooment_area._buddy_fb_composer_section {
+  padding-top: 10px;
+  padding-bottom: 4px;
+}
+
+body.buddy-feed-active ._buddy_fb_comments_thread {
+  padding-top: 2px;
+}
+
+body.buddy-feed-active ._buddy_fb_previous_comment_wrap {
+  margin: 8px 0 14px !important;
+  text-align: left;
+}
+
+body.buddy-feed-active ._buddy_fb_main_composer {
+  width: 100%;
+}
+
+body.buddy-feed-active ._buddy_fb_pill_form {
+  margin: 0;
+  width: 100%;
+}
+
+body.buddy-feed-active ._buddy_fb_pill_inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 12px 6px 8px;
+  background: #f0f2f5;
+  border-radius: 999px;
+  box-sizing: border-box;
+}
+
+body.buddy-feed-active ._layout_main_wrapper._dark_wrapper ._buddy_fb_pill_inner {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+body.buddy-feed-active ._buddy_fb_pill_form_reply {
+  margin-top: 10px;
+  margin-left: 12px;
+}
+
+body.buddy-feed-active ._buddy_fb_pill_form_reply_nested {
+  margin-left: 40px;
+}
+
+body.buddy-feed-active ._buddy_fb_pill_avatar {
+  flex: 0 0 auto;
+}
+
+body.buddy-feed-active ._buddy_fb_pill_textarea {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  resize: none;
+  outline: none;
+  font-size: 15px;
+  line-height: 1.35;
+  max-height: 120px;
+  padding: 8px 4px;
+  color: #050505;
+}
+
+body.buddy-feed-active ._layout_main_wrapper._dark_wrapper ._buddy_fb_pill_textarea {
+  color: #e4e6eb;
+}
+
+body.buddy-feed-active ._buddy_fb_pill_textarea::placeholder {
+  color: #65676b;
+}
+
+body.buddy-feed-active ._layout_main_wrapper._dark_wrapper ._buddy_fb_pill_textarea::placeholder {
+  color: rgba(228, 230, 235, 0.45);
+}
+
+body.buddy-feed-active ._buddy_fb_pill_trail {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+}
+
+body.buddy-feed-active ._buddy_fb_pill_icon_btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #65676b;
+  cursor: default;
+}
+
+body.buddy-feed-active ._buddy_fb_pill_icon_btn:enabled {
+  cursor: pointer;
+}
+
+body.buddy-feed-active ._layout_main_wrapper._dark_wrapper ._buddy_fb_pill_icon_btn {
+  color: rgba(228, 230, 235, 0.55);
+}
+
+body.buddy-feed-active ._buddy_fb_prev_comments_btn {
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1.35;
+  color: #050505 !important;
+}
+
+body.buddy-feed-active ._buddy_fb_show_fewer_btn {
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1.35;
+  color: #65676b !important;
+}
+
+body.buddy-feed-active ._buddy_fb_show_fewer_btn:hover {
+  text-decoration: underline;
+}
+
+body.buddy-feed-active ._layout_main_wrapper._dark_wrapper ._buddy_fb_show_fewer_btn {
+  color: rgba(228, 230, 235, 0.65) !important;
+}
+
+body.buddy-feed-active ._layout_main_wrapper._dark_wrapper ._buddy_fb_prev_comments_btn {
+  color: #e4e6eb !important;
+}
+
+body.buddy-feed-active ._buddy_fb_comment_root {
+  padding-top: 10px;
+}
+
+body.buddy-feed-active ._buddy_fb_comment_root_reply {
+  margin-top: 4px;
+  margin-left: 44px;
+}
+
+body.buddy-feed-active ._buddy_fb_comment_row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+body.buddy-feed-active ._buddy_fb_comment_avatar_slot {
+  flex: 0 0 auto;
+  padding-top: 2px;
+}
+
+body.buddy-feed-active ._buddy_fb_comment_main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+body.buddy-feed-active ._buddy_fb_comment_bubble_wrap {
+  position: relative;
+  display: inline-block;
+  max-width: min(100%, 520px);
+  vertical-align: top;
+}
+
+body.buddy-feed-active ._buddy_fb_comment_bubble {
+  background: #f0f2f5;
+  border-radius: 18px;
+  padding: 8px 12px 14px;
+  box-sizing: border-box;
+}
+
+body.buddy-feed-active ._layout_main_wrapper._dark_wrapper ._buddy_fb_comment_bubble {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+body.buddy-feed-active ._buddy_fb_comment_author {
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1.25;
+  color: #050505;
+}
+
+body.buddy-feed-active ._layout_main_wrapper._dark_wrapper ._buddy_fb_comment_author {
+  color: #e4e6eb;
+}
+
+body.buddy-feed-active ._buddy_fb_comment_body {
+  margin: 4px 0 0;
+  font-size: 15px;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  color: #050505;
+}
+
+body.buddy-feed-active ._layout_main_wrapper._dark_wrapper ._buddy_fb_comment_body {
+  color: #e4e6eb;
+}
+
+body.buddy-feed-active ._buddy_fb_comment_react_badge {
+  position: absolute;
+  right: -6px;
+  bottom: -10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 8px 2px 5px;
+  background: #fff;
+  border-radius: 999px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
+  font-size: 13px;
+  line-height: 1;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+body.buddy-feed-active ._buddy_fb_comment_react_ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+body.buddy-feed-active ._buddy_fb_badge_thumb {
+  color: #1877f2;
+}
+
+body.buddy-feed-active ._buddy_fb_badge_heart {
+  color: #f02849;
+}
+
+body.buddy-feed-active ._layout_main_wrapper._dark_wrapper ._buddy_fb_comment_react_badge {
+  background: #242526;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+body.buddy-feed-active ._buddy_fb_comment_react_cnt {
+  margin-left: 2px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #65676b;
+}
+
+body.buddy-feed-active ._layout_main_wrapper._dark_wrapper ._buddy_fb_comment_react_cnt {
+  color: rgba(228, 230, 235, 0.75);
+}
+
+body.buddy-feed-active ._buddy_fb_comment_likers_txt {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.3;
+  color: #65676b;
+}
+
+body.buddy-feed-active ._layout_main_wrapper._dark_wrapper ._buddy_fb_comment_likers_txt {
+  color: rgba(228, 230, 235, 0.55);
+}
+
+body.buddy-feed-active ._buddy_fb_comment_actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+body.buddy-feed-active ._buddy_fb_comment_action {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: #65676b;
+  cursor: pointer;
+}
+
+body.buddy-feed-active ._buddy_fb_comment_action:hover {
+  text-decoration: underline;
+}
+
+body.buddy-feed-active ._layout_main_wrapper._dark_wrapper ._buddy_fb_comment_action {
+  color: rgba(228, 230, 235, 0.65);
+}
+
+body.buddy-feed-active ._buddy_fb_action_sep {
+  margin: 0 3px;
+  color: #65676b;
+  font-weight: 400;
+  user-select: none;
+}
+
+body.buddy-feed-active ._layout_main_wrapper._dark_wrapper ._buddy_fb_action_sep {
+  color: rgba(228, 230, 235, 0.45);
+}
+
+body.buddy-feed-active ._buddy_fb_comment_time {
+  font-weight: 400;
+  color: #65676b;
+}
+
+body.buddy-feed-active ._layout_main_wrapper._dark_wrapper ._buddy_fb_comment_time {
+  color: rgba(228, 230, 235, 0.45);
 }

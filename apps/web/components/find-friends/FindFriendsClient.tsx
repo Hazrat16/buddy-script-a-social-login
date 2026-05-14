@@ -6,10 +6,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { PublicUser } from "@/components/feed/feed-types";
 import { displayName } from "@/components/feed/feed-types";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { useComingSoon } from "@/components/ui/ComingSoonProvider";
 const fetchOpts: RequestInit = { credentials: "include" };
 
 export function FindFriendsClient() {
   const router = useRouter();
+  const { showComingSoon } = useComingSoon();
   const [me, setMe] = useState<PublicUser | null>(null);
   const [q, setQ] = useState("");
   const [users, setUsers] = useState<PublicUser[]>([]);
@@ -109,7 +111,7 @@ export function FindFriendsClient() {
                 <button
                   type="button"
                   className="shrink-0 rounded-full bg-indigo-600 px-4 py-2 text-xs font-bold text-white hover:bg-indigo-500"
-                  title="Follow is coming soon"
+                  onClick={() => showComingSoon("Connect / Follow")}
                 >
                   Connect
                 </button>

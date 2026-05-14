@@ -1,11 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { useComingSoon } from "@/components/ui/ComingSoonProvider";
 import type { PublicUser } from "../feed-types";
 import { displayName } from "../feed-types";
 import { formatRelativeTime } from "../format";
 
 const PLACEHOLDER_IMG = "/assets/images/logo.svg";
+
+const exploreSoonBtn =
+  "border-0 bg-transparent p-0 text-left font-[inherit] cursor-pointer";
 
 export function BuddyFeedShell({
   directoryUsers,
@@ -14,6 +18,7 @@ export function BuddyFeedShell({
   directoryUsers: PublicUser[];
   children: React.ReactNode;
 }) {
+  const { showComingSoon } = useComingSoon();
   const suggested = directoryUsers.slice(0, 3);
   const rightPeople = directoryUsers.slice(0, 4);
   const memberProfileHref = "/find-friends";
@@ -29,15 +34,15 @@ export function BuddyFeedShell({
               <h4 className="_left_inner_area_explore_title _title5 _mar_b24">Explore</h4>
               <ul className="_left_inner_area_explore_list">
                 <li className="_left_inner_area_explore_item _explore_item">
-                  <span className="_left_inner_area_explore_link" style={{ cursor: "default" }}>
+                  <button type="button" className={`_left_inner_area_explore_link ${exploreSoonBtn}`} onClick={() => showComingSoon("Learning")}>
                     Learning
-                  </span>
+                  </button>
                   <span className="_left_inner_area_explore_link_txt">New</span>
                 </li>
                 <li className="_left_inner_area_explore_item">
-                  <span className="_left_inner_area_explore_link" style={{ cursor: "default" }}>
+                  <button type="button" className={`_left_inner_area_explore_link ${exploreSoonBtn}`} onClick={() => showComingSoon("Insights")}>
                     Insights
-                  </span>
+                  </button>
                 </li>
                 <li className="_left_inner_area_explore_item">
                   <Link href="/find-friends" className="_left_inner_area_explore_link">
@@ -50,14 +55,14 @@ export function BuddyFeedShell({
                   </Link>
                 </li>
                 <li className="_left_inner_area_explore_item">
-                  <span className="_left_inner_area_explore_link" style={{ cursor: "default" }}>
+                  <button type="button" className={`_left_inner_area_explore_link ${exploreSoonBtn}`} onClick={() => showComingSoon("Groups")}>
                     Group
-                  </span>
+                  </button>
                 </li>
                 <li className="_left_inner_area_explore_item _explore_item">
-                  <span className="_left_inner_area_explore_link" style={{ cursor: "default" }}>
+                  <button type="button" className={`_left_inner_area_explore_link ${exploreSoonBtn}`} onClick={() => showComingSoon("Gaming")}>
                     Gaming
-                  </span>
+                  </button>
                   <span className="_left_inner_area_explore_link_txt">New</span>
                 </li>
                 <li className="_left_inner_area_explore_item">
@@ -111,9 +116,23 @@ export function BuddyFeedShell({
             <div className="_left_inner_area_event _padd_t24 _padd_b6 _padd_r24 _padd_l24 _b_radious6 _feed_inner_area">
               <div className="_left_inner_event_content">
                 <h4 className="_left_inner_event_title _title5">Events</h4>
-                <span className="_left_inner_event_link">See all</span>
+                <button type="button" className={`_left_inner_event_link ${exploreSoonBtn}`} onClick={() => showComingSoon("Events")}>
+                  See all
+                </button>
               </div>
-              <div className="_left_inner_event_card_link" style={{ cursor: "pointer" }}>
+              <div
+                className="_left_inner_event_card_link"
+                style={{ cursor: "pointer" }}
+                role="button"
+                tabIndex={0}
+                onClick={() => showComingSoon("Events")}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    showComingSoon("Events");
+                  }
+                }}
+              >
                 <div className="_left_inner_event_card">
                   <div className="_left_inner_event_card_iamge">
                     <img src={PLACEHOLDER_IMG} alt="" className="_card_img" />
@@ -130,7 +149,9 @@ export function BuddyFeedShell({
                   <hr className="_underline" />
                   <div className="_left_inner_event_bottom">
                     <p className="_left_iner_event_bottom">17 People Going</p>
-                    <span className="_left_iner_event_bottom_link">Going</span>
+                    <button type="button" className={`_left_iner_event_bottom_link ${exploreSoonBtn}`} onClick={() => showComingSoon("Event RSVP")}>
+                      Going
+                    </button>
                   </div>
                 </div>
               </div>
@@ -174,10 +195,10 @@ export function BuddyFeedShell({
                     </div>
                   </div>
                   <div className="_right_info_btn_grp">
-                    <button type="button" className="_right_info_btn_link">
+                    <button type="button" className="_right_info_btn_link" onClick={() => showComingSoon("Ignore suggestions")}>
                       Ignore
                     </button>
-                    <button type="button" className="_right_info_btn_link _right_info_btn_link_active">
+                    <button type="button" className="_right_info_btn_link _right_info_btn_link_active" onClick={() => showComingSoon("Follow")}>
                       Follow
                     </button>
                   </div>
@@ -196,7 +217,13 @@ export function BuddyFeedShell({
                     </Link>
                   </span>
                 </div>
-                <form className="_feed_right_inner_area_card_form" onSubmit={(e) => e.preventDefault()}>
+                <form
+                  className="_feed_right_inner_area_card_form"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    showComingSoon("Friends search");
+                  }}
+                >
                   <svg className="_feed_right_inner_area_card_form_svg" xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="none" viewBox="0 0 17 17">
                     <circle cx="7" cy="7" r="6" stroke="#666" />
                     <path stroke="#666" strokeLinecap="round" d="M16 16l-3-3" />
