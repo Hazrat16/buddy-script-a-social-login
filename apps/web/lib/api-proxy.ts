@@ -3,6 +3,30 @@ import { NextResponse } from "next/server";
 
 import { isThisVercelAppHost, isVercelProductionDeploy, readApiBackendBaseFromEnv } from "@/lib/api-backend-env";
 
+/** Extra context for undici/Node `fetch failed` (often hidden in `cause`). */
+function describeFetchFailure(err: unknown): string {
+  if (!(err instanceof Error)) return String(err);
+  const parts: string[] = [err.message];
+  let cursor: unknown = err.cause;
+  for (let i = 0; i < 5 && cursor; i++) {
+    if (cursor instanceof Error) {
+      const code =
+        "code" in cursor && typeof (cursor as NodeJS.ErrnoException).code === "string"
+          ? (cursor as NodeJS.ErrnoException).code
+          : undefined;
+      parts.push(code ? `${cursor.message} (${code})` : cursor.message);
+      cursor = cursor.cause;
+    } else if (typeof cursor === "object" && cursor !== null && "code" in cursor) {
+      parts.push(`code=${String((cursor as { code: unknown }).code)}`);
+      break;
+    } else {
+      parts.push(String(cursor));
+      break;
+    }
+  }
+  return parts.join(" | ");
+}
+
 /**
  * Resolve at **request time** (not module load). See `lib/api-backend-env.ts` for env names.
  * On Vercel, a base URL is **required** — never default to localhost (that would hide a missing env).
@@ -72,6 +96,8 @@ export async function proxyApiRequest(request: NextRequest): Promise<Response> {
     headers,
     redirect: "manual",
     cache: "no-store",
+    /** Railway cold starts can exceed Vercel Hobby’s default ~10s wall; `maxDuration` on the route helps on paid tiers. */
+    signal: AbortSignal.timeout(55_000),
   };
 
   if (request.method !== "GET" && request.method !== "HEAD") {
@@ -109,7 +135,12 @@ export async function proxyApiRequest(request: NextRequest): Promise<Response> {
       headers: outHeaders,
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
+    const detail = describeFetchFailure(err);
+    const isTimeout =
+      detail.includes("AbortError") ||
+      detail.includes("The operation was aborted") ||
+      detail.includes("ETIMEDOUT") ||
+      detail.includes("UND_ERR_CONNECT_TIMEOUT");
     return NextResponse.json(
       {
         error: "Cannot reach API backend",
@@ -120,8 +151,10 @@ export async function proxyApiRequest(request: NextRequest): Promise<Response> {
             return "invalid-backend-url";
           }
         })(),
-        hint: `Check that the API is running and BACKEND_API_URL / NEXT_API_BASE_URL matches it (currently targeting ${backend}).`,
-        detail: msg,
+        hint: isTimeout
+          ? `Upstream did not respond in time (${backend}). Vercel Hobby limits serverless duration (~10s); Railway cold starts often exceed that. Try: open ${backend}/health in a browser to wake the service, upgrade Vercel for a higher maxDuration, or add a Railway cron hitting /health.`
+          : `Check that the API is deployed and healthy: ${backend}/health — then confirm BACKEND_API_URL / NEXT_API_BASE_URL on Vercel matches that host exactly (https, no trailing path).`,
+        detail,
       },
       { status: 502 },
     );
