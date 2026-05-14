@@ -1,7 +1,16 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-const backend = (process.env.API_INTERNAL_URL || "http://127.0.0.1:3001").replace(/\/$/, "");
+/**
+ * Resolve at **request time** (not module load). Next/Vercel can inline `process.env.API_INTERNAL_URL`
+ * at build if read as a static member; bracket access + reading inside the handler avoids a baked-in
+ * `http://127.0.0.1:3001` when the var was only set for runtime on Vercel.
+ */
+function getBackendBase(): string {
+  const raw = process.env["API_INTERNAL_URL"];
+  const s = typeof raw === "string" && raw.trim() ? raw.trim() : "http://127.0.0.1:3001";
+  return s.replace(/\/$/, "");
+}
 
 /** Headers that must not be forwarded to Node fetch / upstream. */
 const hopByHop = new Set([
@@ -29,6 +38,7 @@ function forwardHeaders(request: NextRequest): Headers {
  * This replaces `next.config` rewrites so routing is explicit and always hits your API code.
  */
 export async function proxyApiRequest(request: NextRequest): Promise<Response> {
+  const backend = getBackendBase();
   const target = `${backend}${request.nextUrl.pathname}${request.nextUrl.search}`;
   const headers = forwardHeaders(request);
 
@@ -58,10 +68,14 @@ export async function proxyApiRequest(request: NextRequest): Promise<Response> {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
+    const onVercel = Boolean(process.env.VERCEL);
+    const missingUpstream = onVercel && !process.env["API_INTERNAL_URL"]?.trim();
     return NextResponse.json(
       {
         error: "Cannot reach API backend",
-        hint: `Check that the API is running and API_INTERNAL_URL matches it (currently targeting ${backend}).`,
+        hint: missingUpstream
+          ? "On Vercel, set API_INTERNAL_URL to your Railway API URL and enable it for **Build** and **Production**, then redeploy. (Otherwise the proxy may fall back to localhost.)"
+          : `Check that the API is running and API_INTERNAL_URL matches it (currently targeting ${backend}).`,
         detail: msg,
       },
       { status: 502 },

@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
-const apiInternal = (process.env.API_INTERNAL_URL || "http://127.0.0.1:3001").replace(/\/$/, "");
+/** Build-time: set `API_INTERNAL_URL` on Vercel for "Build" so `/uploads` rewrites and image hosts match production. */
+const apiInternal = (
+  (process.env["API_INTERNAL_URL"] as string | undefined)?.trim().replace(/\/$/, "") ||
+  "http://127.0.0.1:3001"
+);
 
 /** Allow `next/image` (if used) to load absolute URLs from the same host as `API_INTERNAL_URL`. */
 function apiRemotePattern():
