@@ -1,7 +1,9 @@
 import type { NextRequest } from "next/server";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { isThisVercelAppHost, isVercelProductionDeploy, readApiBackendBaseFromEnv } from "@/lib/api-backend-env";
+import { SESSION_COOKIE, sessionCookieOptions } from "@/lib/session-cookie";
 
 /** Extra context for undici/Node `fetch failed` (often hidden in `cause`). */
 function describeFetchFailure(err: unknown): string {
@@ -59,6 +61,60 @@ function forwardHeaders(request: NextRequest): Headers {
     if (!hopByHop.has(key.toLowerCase())) out.set(key, value);
   });
   return out;
+}
+
+/** Prefer `getSetCookie()` (Node/undici). Some environments only expose a single merged `set-cookie` header. */
+function getUpstreamSetCookieLines(res: Response): string[] {
+  if (typeof res.headers.getSetCookie === "function") {
+    const list = res.headers.getSetCookie();
+    if (list.length > 0) return list;
+  }
+  const single = res.headers.get("set-cookie");
+  return single ? [single] : [];
+}
+
+/** First `name=value` segment only (attributes after `;` are ignored). */
+function parseFirstCookiePair(line: string): { name: string; value: string } | null {
+  const eq = line.indexOf("=");
+  if (eq < 1) return null;
+  const name = line.slice(0, eq).trim();
+  const rest = line.slice(eq + 1);
+  const semi = rest.indexOf(";");
+  const encoded = (semi === -1 ? rest : rest.slice(0, semi)).trim();
+  try {
+    return { name, value: decodeURIComponent(encoded) };
+  } catch {
+    return { name, value: encoded };
+  }
+}
+
+/**
+ * Re-apply upstream `Set-Cookie` on the Next response. Forwarding only via `Headers.append("Set-Cookie")`
+ * on a raw `Response` is unreliable in some production setups; `cookies().set()` is the supported App Router path.
+ */
+async function forwardUpstreamSetCookieHeaders(upstream: Response, outHeaders: Headers): Promise<void> {
+  const lines = getUpstreamSetCookieLines(upstream);
+  if (lines.length === 0) return;
+
+  let jar: Awaited<ReturnType<typeof cookies>> | null = null;
+  try {
+    jar = await cookies();
+  } catch {
+    jar = null;
+  }
+
+  for (const line of lines) {
+    const pair = parseFirstCookiePair(line);
+    if (jar && pair?.name === SESSION_COOKIE) {
+      if (!pair.value) {
+        jar.delete(SESSION_COOKIE);
+      } else {
+        jar.set(SESSION_COOKIE, pair.value, sessionCookieOptions);
+      }
+      continue;
+    }
+    outHeaders.append("Set-Cookie", line);
+  }
 }
 
 /**
@@ -125,10 +181,7 @@ export async function proxyApiRequest(request: NextRequest): Promise<Response> {
       if (k === "set-cookie") return;
       outHeaders.set(key, value);
     });
-    const cookies = res.headers.getSetCookie?.() ?? [];
-    for (const c of cookies) {
-      outHeaders.append("Set-Cookie", c);
-    }
+    await forwardUpstreamSetCookieHeaders(res, outHeaders);
 
     try {
       outHeaders.set("x-upstream-host", new URL(backend).hostname);
@@ -139,7 +192,7 @@ export async function proxyApiRequest(request: NextRequest): Promise<Response> {
     }
     outHeaders.set("x-proxied-by", "nextjs");
 
-    return new Response(res.body, {
+    return new NextResponse(res.body, {
       status: res.status,
       statusText: res.statusText,
       headers: outHeaders,

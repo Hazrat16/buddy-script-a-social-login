@@ -1,14 +1,8 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
-import { SESSION_COOKIE } from "@/lib/session-cookie";
+import { SESSION_COOKIE, sessionCookieOptions } from "@/lib/session-cookie";
 
-export const sessionCookieOptions = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "lax" as const,
-  path: "/",
-  maxAge: 60 * 60 * 24 * 7,
-};
+export { sessionCookieOptions };
 
 function getSecret() {
   const s = process.env.AUTH_SECRET;
