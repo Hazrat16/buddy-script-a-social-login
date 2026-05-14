@@ -1,39 +1,36 @@
 export type PublicUser = {
-  id: string;
-  email?: string;
-  firstName: string;
-  lastName: string;
-  createdAt?: string;
-  postCount?: number;
-  commentCount?: number;
+    id: string;
+    email?: string;
+    firstName: string;
+    lastName: string;
+    createdAt?: string;
+    postCount?: number;
+    commentCount?: number;
 };
-
 export function displayName(u: PublicUser) {
-  return `${u.firstName} ${u.lastName}`.trim();
+    return `${u.firstName} ${u.lastName}`.trim();
 }
-
 export type FeedPost = {
-  id: string;
-  body: string;
-  imageUrl: string | null;
-  visibility: "PUBLIC" | "PRIVATE";
-  createdAt: string;
-  updatedAt?: string;
-  author: PublicUser;
-  likeCount: number;
-  commentCount: number;
-  likedByMe: boolean;
-  likedBy: PublicUser[];
+    id: string;
+    body: string;
+    imageUrl: string | null;
+    visibility: "PUBLIC" | "PRIVATE";
+    createdAt: string;
+    updatedAt?: string;
+    author: PublicUser;
+    likeCount: number;
+    commentCount: number;
+    likedByMe: boolean;
+    likedBy: PublicUser[];
 };
-
 export type CommentNode = {
-  id: string;
-  parentId: string | null;
-  body: string;
-  createdAt: string;
-  author: PublicUser;
-  likeCount: number;
-  likedByMe: boolean;
-  likedBy: PublicUser[];
-  replies: CommentNode[];
+    id: string;
+    parentId: string | null;
+    body: string;
+    createdAt: string;
+    author: PublicUser;
+    likeCount: number;
+    likedByMe: boolean;
+    likedBy: PublicUser[];
+    replies: CommentNode[];
 };

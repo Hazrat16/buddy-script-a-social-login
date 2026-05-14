@@ -12,7 +12,8 @@
     "db:push": "npm run db:push -w api",
     "db:studio": "npm run db:studio -w api",
     "docker:up": "docker compose up -d",
-    "docker:down": "docker compose down"
+    "docker:down": "docker compose down",
+    "strip-comments": "node scripts/strip-all-comments.cjs"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

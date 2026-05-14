@@ -1,51 +1,44 @@
 "use client";
-
 import Link from "next/link";
 import { useState } from "react";
 import { BuddyAuthShapes } from "@/components/marketing/BuddyAuthShapes";
 import { useBuddyAuthAssets } from "@/components/marketing/useBuddyAuthAssets";
-
 function useHeroImgFallback() {
-  return (e: React.SyntheticEvent<HTMLImageElement>) => {
-    e.currentTarget.onerror = null;
-    e.currentTarget.src = "/assets/images/logo.svg";
-  };
+    return (e: React.SyntheticEvent<HTMLImageElement>) => {
+        e.currentTarget.onerror = null;
+        e.currentTarget.src = "/assets/images/logo.svg";
+    };
 }
-
 export default function LoginPage() {
-  useBuddyAuthAssets(true);
-  const onHeroError = useHeroImgFallback();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [err, setErr] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setErr(null);
-    setLoading(true);
-    try {
-      // Same-origin /api → Next proxies to Express (BACKEND_API_URL / NEXT_API_BASE_URL). Required so Set-Cookie applies to this host.
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setErr(data.error || "Login failed");
-        return;
-      }
-      /** Full navigation: ensures `Set-Cookie` is applied before `/feed` (client `router.push` can race middleware / RSC in production). */
-      window.location.assign("/feed");
-    } finally {
-      setLoading(false);
+    useBuddyAuthAssets(true);
+    const onHeroError = useHeroImgFallback();
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [err, setErr] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
+    async function onSubmit(e: React.FormEvent) {
+        e.preventDefault();
+        setErr(null);
+        setLoading(true);
+        try {
+            const res = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ email, password }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                setErr(data.error || "Login failed");
+                return;
+            }
+            window.location.assign("/feed");
+        }
+        finally {
+            setLoading(false);
+        }
     }
-  }
-
-  return (
-    <section className="_social_login_wrapper _layout_main_wrapper">
+    return (<section className="_social_login_wrapper _layout_main_wrapper">
       <BuddyAuthShapes />
       <div className="_social_login_wrap">
         <div className="container">
@@ -53,24 +46,19 @@ export default function LoginPage() {
             <div className="col-xl-8 col-lg-8 col-md-12 col-sm-12">
               <div className="_social_login_left">
                 <div className="_social_login_left_image">
-                  <img
-                    src="/assets/images/login.png"
-                    alt=""
-                    className="_left_img"
-                    onError={onHeroError}
-                  />
+                  <img src="/assets/images/login.png" alt="" className="_left_img" onError={onHeroError}/>
                 </div>
               </div>
             </div>
             <div className="col-xl-4 col-lg-4 col-md-12 col-sm-12">
               <div className="_social_login_content">
                 <div className="_social_login_left_logo _mar_b28">
-                  <img src="/assets/images/logo.svg" alt="" className="_left_logo" />
+                  <img src="/assets/images/logo.svg" alt="" className="_left_logo"/>
                 </div>
                 <p className="_social_login_content_para _mar_b8">Welcome back</p>
                 <h4 className="_social_login_content_title _titl4 _mar_b50">Login to your account</h4>
                 <button type="button" className="_social_login_content_btn _mar_b40" title="Google sign-in is not enabled">
-                  <img src="/assets/images/google.svg" alt="" className="_google_img" /> <span>Or sign-in with google</span>
+                  <img src="/assets/images/google.svg" alt="" className="_google_img"/> <span>Or sign-in with google</span>
                 </button>
                 <div className="_social_login_content_bottom_txt _mar_b40">
                   {" "}
@@ -83,15 +71,7 @@ export default function LoginPage() {
                         <label className="_social_login_label _mar_b8" htmlFor="login-email">
                           Email
                         </label>
-                        <input
-                          id="login-email"
-                          type="email"
-                          autoComplete="email"
-                          required
-                          className="form-control _social_login_input"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                        />
+                        <input id="login-email" type="email" autoComplete="email" required className="form-control _social_login_input" value={email} onChange={(e) => setEmail(e.target.value)}/>
                       </div>
                     </div>
                     <div className="col-xl-12 col-lg-12 col-md-12 col-sm-12">
@@ -99,38 +79,21 @@ export default function LoginPage() {
                         <label className="_social_login_label _mar_b8" htmlFor="login-password">
                           Password
                         </label>
-                        <input
-                          id="login-password"
-                          type="password"
-                          autoComplete="current-password"
-                          required
-                          className="form-control _social_login_input"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                        />
+                        <input id="login-password" type="password" autoComplete="current-password" required className="form-control _social_login_input" value={password} onChange={(e) => setPassword(e.target.value)}/>
                       </div>
                     </div>
                   </div>
-                  {err ? (
-                    <div className="row">
+                  {err ? (<div className="row">
                       <div className="col-12">
                         <p className="_notification_para" style={{ color: "#c00", marginBottom: 12 }}>
                           {err}
                         </p>
                       </div>
-                    </div>
-                  ) : null}
+                    </div>) : null}
                   <div className="row">
                     <div className="col-lg-6 col-xl-6 col-md-6 col-sm-12">
                       <div className="form-check _social_login_form_check">
-                        <input
-                          className="form-check-input _social_login_form_check_input"
-                          type="radio"
-                          name="flexRadioDefault"
-                          id="flexRadioDefault2"
-                          defaultChecked
-                          readOnly
-                        />
+                        <input className="form-check-input _social_login_form_check_input" type="radio" name="flexRadioDefault" id="flexRadioDefault2" defaultChecked readOnly/>
                         <label className="form-check-label _social_login_form_check_label" htmlFor="flexRadioDefault2">
                           Remember me
                         </label>
@@ -169,6 +132,5 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>);
 }

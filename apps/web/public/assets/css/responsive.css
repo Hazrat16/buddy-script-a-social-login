@@ -21,7 +21,7 @@
     }
 }
 @media(max-width:420px) {
-    /*---- chat Css ----*/
+    
     ._chat_box {
         padding: 12px;
     }
@@ -66,15 +66,13 @@
     ._chat_left_form_input::placeholder {
         font-size: 12px;
     }
-    /*---- chat Css ----*/
+    
 }
 @media(max-width:410px) {
     ._rect_img_mbl_none {
         display: none;
     }
-    /* ._chat_right {
-        height: calc(100vh - 82px);
-    } */
+    
 }
 @media only screen and (max-width:575px) {
     ._req_inner_btn_wrap {
@@ -171,7 +169,7 @@
     ._top_inner_content_area_btn {
         margin: 0 8px;
     }
-    /*--- Chat Css -----*/
+    
     ._chat_inner_top_icon {
         margin: 0 0 0 16px;
     }
@@ -236,8 +234,8 @@
     ._chat_middle_box_sender_txt {
         padding: 12px;
     }
-    /*--- Chat Css -----*/
-    /*--- group css ----*/
+    
+    
     ._group_categories_btn_link {
         padding: 12px 16px;
     }
@@ -250,7 +248,7 @@
         justify-content: flex-start;
         margin: 0px 0 20px 0;
     }
-    /*--- Login Css -----*/
+    
     .form-check-input {
         float: unset !important;
     }
@@ -260,19 +258,19 @@
     ._social_login_wrapper {
         padding: 50px 0px;
     }
-    /*--- Registration Css -----*/
+    
     ._social_registration_wrapper {
         padding: 50px 0px;
     }
-    /*--- Chat Css ----*/
+    
     ._chat_textarea {
         width: 100% !important;
     }
-    /*--- Chat Css ----*/
+    
     ._top_inner_content_area_btn_link span svg {
         margin: 0;
     }
-    /*--group css ----*/
+    
     ._group_categories_btn {
         justify-content: start;
         margin: 0 0 20px;
@@ -286,12 +284,12 @@
         margin: 0 0 20px;
     }
 }
-/*iPad*/
+
 @media(max-width:991px){
     ._req_inner_wrapper ._request_wrappper {
         padding: 100px 0 100px 0;
     }
-    /*--- Login Css -----*/
+    
     ._social_login_content {
         margin: 30px 0 0 0;
         text-align: center;
@@ -311,7 +309,7 @@
     ._top_logo {
         margin: 0 auto;
     }
-    /*--- Registration Css -----*/
+    
     ._social_registration_content {
         margin: 30px 0 0 0;
         text-align: center;
@@ -343,25 +341,25 @@
     ._shape_two {
         display: none;
     }
-    /*--- Desktop Menu ---- */
+    
     ._header_nav {
         display: none;
     }
     ._layout_mode_swithing_btn {
         display: none;
     }
-    /*---- Mobile Menu ----*/
+    
     ._header_mobile_menu{
         display: block;
     }
     ._header_mobile_menu ._header_form_grp {
         margin:0;
     }
-    /*---- Mobile Menu Dropdown -----*/
+    
     ._mobile_menu_dark ._layout_mode_swithing_btn {
         display: block;
     }
-    /*---Layout CSS ----*/
+    
     ._layout {
         height: 100%;
     }
@@ -546,9 +544,9 @@
     ._group_recommend_wrapper  {
         padding-bottom:90px;
     }
-    /*---Layout CSS End ----*/
+    
 
-    /*---- Chat Css ----*/
+    
     ._layout_chat {
         display: none;
     }
@@ -603,7 +601,7 @@
         color: var(--color2);
         opacity: 0.7;
     }
-    /*---- Chat Css ----*/
+    
     ._req_img {
         max-width: 100%;
     }
@@ -613,7 +611,7 @@
     ._request_wrappper {
         padding: 100px 0 70px 0;
     }
-    /*---- Notification mobile ----*/
+    
     ._notifications_mobile  {
         display: block;
     }
@@ -627,7 +625,7 @@
         opacity:1;
     }
 }
-/*Dekstop*/
+
 @media only screen and (min-width:1500px) and (max-width: 1700px){
     ._shape_three {
         right: 226px;
@@ -656,7 +654,7 @@
     ._header_nav_profile_image {
         flex: 0 0 24px;
     }
-    /*--- Login Css -----*/
+    
     ._social_login_content_btn span {
         font-size: 13px;
     }
@@ -672,7 +670,7 @@
     ._btn1 {
         padding: 12px 56px !important;
     }
-    /*--- Registration Css -----*/
+    
     ._social_registration_content_btn span {
         font-size: 13px;
     }
@@ -695,14 +693,14 @@
     ._shape_two {
         width: 450px;
     }
-    /*--- Feed Css -----*/
+    
     ._left_inner_area_explore_link {
         font-size: 12px;
     }
     ._text1 {
         max-width: 74%;
     }
-    /*---Profile css ------*/
+    
     ._left_inner_area_explore_link {
         font-size: 11px !important;
     }
@@ -714,7 +712,7 @@
         max-width: 50px !important;
         height: 50px !important;
     }
-    /*---- Feed02 Css -------*/
+    
     ._slider_image_none {
         display:none;
     }
@@ -748,7 +746,7 @@
     ._top_inner_content_area_right {
         margin: 20px 0 0 0;
     }
-    /*--- Chat Css ----- */
+    
     ._chat_box {
         justify-content: space-between;
     }
@@ -777,7 +775,7 @@
     ._custom_container {
         max-width: 1160px;
     }
-    /*--- Feed Css -----*/
+    
     ._title5 {
         font-size: 13px !important;
     }    
@@ -848,7 +846,7 @@
     ._header_nav_item {
         margin: 0 -2px;
     }
-    /*----- Discover Event Css  --------*/
+    
     ._discover_event_inner_card_date span {
         font-size: 10px;
     }
@@ -866,7 +864,7 @@
     ._layout_mode_swithing_btn {
         right: -50px;
     }
-    /*--- Login Css -----*/
+    
     ._social_login_content_title {
         font-size: 22px;
     }
@@ -880,7 +878,7 @@
     ._btn1 {
         padding: 12px 88px;
     }
-    /*--- Registration Css -----*/
+    
     ._social_registration_bottom_txt_para {
         font-size: 11px;
     }
@@ -897,7 +895,7 @@
     ._social_registration_bottom_txt_para {
         font-size: 11px;
     }
-    /*--- Feed Css -----*/
+    
     ._left_inner_area_suggest_info_title {
         font-size: 11px;
     }
@@ -919,7 +917,7 @@
     ._title5 {
         font-size: 15px;
     }
-    /*----- Discover Event Css  --------*/
+    
     ._discover_event_inner_card_date span {
         font-size: 13px;
     }
@@ -932,7 +930,7 @@
     ._discover_event_inner_card_details2 span {
         font-size: 12px;
     }
-    /*----- Profile Css ------*/
+    
     ._left_inner_area_explore_link {
         font-size: 14px;
     }
@@ -948,14 +946,14 @@
         display: flex;
         align-items: center;
     }
-    /*----Group Single CSS -----*/
+    
     ._top_inner_content_area_txt_title {
         font-size: 20px;
     }
     ._top_inner_content_area_txt_para {
         font-size: 12px;
     }
-    /*---- Chat Css ---*/
+    
     ._chat_textarea {
         width: 470px;
     }

@@ -103,7 +103,7 @@ ul {
 }
 
 
-/*color*/
+
 
 :root {
     --color: #2D3748;
@@ -160,7 +160,7 @@ ul {
 }
 
 
-/*TITLE*/
+
 
 ._title1 {
     font-weight: 700;
@@ -196,7 +196,7 @@ ul {
 }
 
 
-/*input*/
+
 
 ._inpt1 {
     background: var(--bg3);
@@ -211,7 +211,7 @@ ul {
     border:1px solid var(--color5);
 }
 
-/*INPUT PLACEHOLDER*/
+
 
 ._inpt1::placeholder {
     font-family: Poppins;
@@ -223,10 +223,10 @@ ul {
 
 
 
-/*INPUT PLACEHOLDER*/
 
 
-/*INPUT FOCUS*/
+
+
 
 ._inpt1:focus::placeholder {
     transition: .2s all ease;
@@ -234,10 +234,10 @@ ul {
 }
 
 
-/*INPUT FOCUS*/
 
 
-/*Button*/
+
+
 
 ._btn1 {
     padding: 12px 116px;
@@ -285,7 +285,7 @@ ul {
 ._btn4:hover {}
 
 
-/* Display */
+
 
 ._dis_flex {
     display: -webkit-box;
@@ -346,7 +346,7 @@ ul {
 }
 
 
-/* Text Overflow */
+
 
 ._1text_overflow {
     white-space: nowrap;
@@ -403,7 +403,7 @@ ul {
 }
 
 
-/*Box Shadow*/
+
 
 ._box_shdw1 {
     -webkit-box-shadow: var(--b-shadow1);
@@ -421,7 +421,7 @@ ul {
 }
 
 
-/* Border Radious*/
+
 
 ._b_radious1 {
     border-radius: 1px;
@@ -520,7 +520,7 @@ ul {
 }
 
 
-/* Margin Top */
+
 
 ._mar_t1 {
     margin-top: 1px;
@@ -719,7 +719,7 @@ ul {
 }
 
 
-/* Margin Bottom */
+
 
 ._mar_b1 {
     margin-bottom: 1px;
@@ -918,7 +918,7 @@ ul {
 }
 
 
-/* Margin Left */
+
 
 ._mar_l1 {
     margin-left: 1px;
@@ -1117,7 +1117,7 @@ ul {
 }
 
 
-/* Margin Right */
+
 
 ._mar_r1 {
     margin-right: 1px;
@@ -1316,7 +1316,7 @@ ul {
 }
 
 
-/* Padding Top */
+
 
 ._padd_t1 {
     padding-top: 1px;
@@ -1515,7 +1515,7 @@ ul {
 }
 
 
-/* Padding Bottom */
+
 
 ._padd_b1 {
     padding-bottom: 1px;
@@ -1714,7 +1714,7 @@ ul {
 }
 
 
-/* Padding Left */
+
 
 ._padd_l1 {
     padding-left: 1px;
@@ -1913,7 +1913,7 @@ ul {
 }
 
 
-/* Padding Right */
+
 
 ._padd_r1 {
     padding-right: 1px;
@@ -2112,35 +2112,27 @@ ul {
 }
 
 
-/*scroll bar*/
 
 
-/* width */
+
+
 
 ::-webkit-scrollbar {
     width: 5px;
 }
 
 
-/* Track */
+
 
 ::-webkit-scrollbar-track {
     background: transparent;
 }
 
 
-/* Handle */
+
 
 ::-webkit-scrollbar-thumb {
     background: #D9DEDD;
     cursor: pointer;
     border-radius: 10px;
-}
-
-
-/* Handle on hover */
-
-
-/*::-webkit-scrollbar-thumb:hover {
-  background: #555;
 }

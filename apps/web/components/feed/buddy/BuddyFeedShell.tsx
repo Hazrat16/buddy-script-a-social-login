@@ -1,30 +1,20 @@
 "use client";
-
 import Link from "next/link";
 import { useComingSoon } from "@/components/ui/ComingSoonProvider";
 import type { PublicUser } from "../feed-types";
 import { displayName } from "../feed-types";
 import { formatRelativeTime } from "../format";
-
 const PLACEHOLDER_IMG = "/assets/images/logo.svg";
-
-const exploreSoonBtn =
-  "border-0 bg-transparent p-0 text-left font-[inherit] cursor-pointer";
-
-export function BuddyFeedShell({
-  directoryUsers,
-  children,
-}: {
-  directoryUsers: PublicUser[];
-  children: React.ReactNode;
+const exploreSoonBtn = "border-0 bg-transparent p-0 text-left font-[inherit] cursor-pointer";
+export function BuddyFeedShell({ directoryUsers, children, }: {
+    directoryUsers: PublicUser[];
+    children: React.ReactNode;
 }) {
-  const { showComingSoon } = useComingSoon();
-  const suggested = directoryUsers.slice(0, 3);
-  const rightPeople = directoryUsers.slice(0, 4);
-  const memberProfileHref = "/find-friends";
-
-  return (
-    <div className="container _custom_container">
+    const { showComingSoon } = useComingSoon();
+    const suggested = directoryUsers.slice(0, 3);
+    const rightPeople = directoryUsers.slice(0, 4);
+    const memberProfileHref = "/find-friends";
+    return (<div className="container _custom_container">
   <div className="_layout_inner_wrap">
     <div className="row">
       <div className="col-xl-3 col-lg-3 col-md-12 col-sm-12">
@@ -88,12 +78,11 @@ export function BuddyFeedShell({
                   </Link>
                 </span>
               </div>
-              {suggested.map((u) => (
-                <div key={u.id} className="_left_inner_area_suggest_info">
+              {suggested.map((u) => (<div key={u.id} className="_left_inner_area_suggest_info">
                   <div className="_left_inner_area_suggest_info_box">
                     <div className="_left_inner_area_suggest_info_image">
                       <Link href={memberProfileHref}>
-                        <img src={PLACEHOLDER_IMG} alt="" className="_info_img" />
+                        <img src={PLACEHOLDER_IMG} alt="" className="_info_img"/>
                       </Link>
                     </div>
                     <div className="_left_inner_area_suggest_info_txt">
@@ -108,8 +97,7 @@ export function BuddyFeedShell({
                       Connect
                     </Link>
                   </div>
-                </div>
-              ))}
+                </div>))}
             </div>
           </div>
           <div className="_layout_left_sidebar_inner">
@@ -120,22 +108,15 @@ export function BuddyFeedShell({
                   See all
                 </button>
               </div>
-              <div
-                className="_left_inner_event_card_link"
-                style={{ cursor: "pointer" }}
-                role="button"
-                tabIndex={0}
-                onClick={() => showComingSoon("Events")}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    showComingSoon("Events");
-                  }
-                }}
-              >
+              <div className="_left_inner_event_card_link" style={{ cursor: "pointer" }} role="button" tabIndex={0} onClick={() => showComingSoon("Events")} onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                showComingSoon("Events");
+            }
+        }}>
                 <div className="_left_inner_event_card">
                   <div className="_left_inner_event_card_iamge">
-                    <img src={PLACEHOLDER_IMG} alt="" className="_card_img" />
+                    <img src={PLACEHOLDER_IMG} alt="" className="_card_img"/>
                   </div>
                   <div className="_left_inner_event_card_content">
                     <div className="_left_inner_card_date">
@@ -146,7 +127,7 @@ export function BuddyFeedShell({
                       <h4 className="_left_inner_event_card_title">Community meetup</h4>
                     </div>
                   </div>
-                  <hr className="_underline" />
+                  <hr className="_underline"/>
                   <div className="_left_inner_event_bottom">
                     <p className="_left_iner_event_bottom">17 People Going</p>
                     <button type="button" className={`_left_iner_event_bottom_link ${exploreSoonBtn}`} onClick={() => showComingSoon("Event RSVP")}>
@@ -178,13 +159,12 @@ export function BuddyFeedShell({
                   </Link>
                 </span>
               </div>
-              <hr className="_underline" />
-              {rightPeople[0] ? (
-                <div className="_right_inner_area_info_ppl">
+              <hr className="_underline"/>
+              {rightPeople[0] ? (<div className="_right_inner_area_info_ppl">
                   <div className="_right_inner_area_info_box">
                     <div className="_right_inner_area_info_box_image">
                       <Link href={memberProfileHref}>
-                        <img src={PLACEHOLDER_IMG} alt="" className="_ppl_img" />
+                        <img src={PLACEHOLDER_IMG} alt="" className="_ppl_img"/>
                       </Link>
                     </div>
                     <div className="_right_inner_area_info_box_txt">
@@ -202,8 +182,7 @@ export function BuddyFeedShell({
                       Follow
                     </button>
                   </div>
-                </div>
-              ) : null}
+                </div>) : null}
             </div>
           </div>
           <div className="_layout_right_sidebar_inner">
@@ -217,32 +196,23 @@ export function BuddyFeedShell({
                     </Link>
                   </span>
                 </div>
-                <form
-                  className="_feed_right_inner_area_card_form"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    showComingSoon("Friends search");
-                  }}
-                >
+                <form className="_feed_right_inner_area_card_form" onSubmit={(e) => {
+            e.preventDefault();
+            showComingSoon("Friends search");
+        }}>
                   <svg className="_feed_right_inner_area_card_form_svg" xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="none" viewBox="0 0 17 17">
-                    <circle cx="7" cy="7" r="6" stroke="#666" />
-                    <path stroke="#666" strokeLinecap="round" d="M16 16l-3-3" />
+                    <circle cx="7" cy="7" r="6" stroke="#666"/>
+                    <path stroke="#666" strokeLinecap="round" d="M16 16l-3-3"/>
                   </svg>
-                  <input
-                    className="form-control me-2 _feed_right_inner_area_card_form_inpt"
-                    type="search"
-                    placeholder="Search friends…"
-                    aria-label="Search friends"
-                  />
+                  <input className="form-control me-2 _feed_right_inner_area_card_form_inpt" type="search" placeholder="Search friends…" aria-label="Search friends"/>
                 </form>
               </div>
               <div className="_feed_bottom_fixed">
-                {rightPeople.slice(0, 5).map((u) => (
-                  <div key={u.id} className="_feed_right_inner_area_card_ppl _feed_right_inner_area_card_ppl_inactive">
+                {rightPeople.slice(0, 5).map((u) => (<div key={u.id} className="_feed_right_inner_area_card_ppl _feed_right_inner_area_card_ppl_inactive">
                     <div className="_feed_right_inner_area_card_ppl_box">
                       <div className="_feed_right_inner_area_card_ppl_image">
                         <Link href={memberProfileHref}>
-                          <img src={PLACEHOLDER_IMG} alt="" className="_box_ppl_img" />
+                          <img src={PLACEHOLDER_IMG} alt="" className="_box_ppl_img"/>
                         </Link>
                       </div>
                       <div className="_feed_right_inner_area_card_ppl_txt">
@@ -255,8 +225,7 @@ export function BuddyFeedShell({
                     <div className="_feed_right_inner_area_card_ppl_side">
                       <span>{formatRelativeTime(u.createdAt ?? new Date().toISOString())}</span>
                     </div>
-                  </div>
-                ))}
+                  </div>))}
               </div>
             </div>
           </div>
@@ -264,7 +233,5 @@ export function BuddyFeedShell({
       </div>
     </div>
   </div>
-</div>
-
-  );
+    </div>);
 }

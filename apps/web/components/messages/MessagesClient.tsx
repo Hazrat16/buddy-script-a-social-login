@@ -1,10 +1,7 @@
 "use client";
-
 import Link from "next/link";
-
 export function MessagesClient() {
-  return (
-    <div className="mx-auto max-w-lg px-4 py-8 text-center sm:px-6">
+    return (<div className="mx-auto max-w-lg px-4 py-8 text-center sm:px-6">
       <Link href="/feed" className="text-sm font-semibold text-indigo-600 hover:underline dark:text-indigo-400">
         ← Back to feed
       </Link>
@@ -17,6 +14,5 @@ export function MessagesClient() {
           Direct messaging is not wired up yet. The chat icon in the header matches the Buddy Script template — this screen reserves the route for when real-time chat ships.
         </p>
       </div>
-    </div>
-  );
+    </div>);
 }

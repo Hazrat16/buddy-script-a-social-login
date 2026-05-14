@@ -1,6 +1,6 @@
-/* Buddy feed + Next.js / Tailwind integration fixes */
 
-/* Desktop navbar: keep collapse row visible (Bootstrap + layout) */
+
+
 @media (min-width: 992px) {
   body.buddy-feed-active nav.navbar._header_nav.navbar-expand-lg .container._custom_container {
     display: flex;
@@ -51,7 +51,7 @@
   }
 }
 
-/* Story cards: label + corner mini avatar stacking (template expects <img> mini) */
+
 body.buddy-feed-active ._feed_inner_public_story_image {
   min-height: 148px;
 }
@@ -77,7 +77,7 @@ body.buddy-feed-active ._feed_inner_public_mini img._public_mini_img {
   display: block;
 }
 
-/* Composer: keep floating label from colliding with textarea */
+
 body.buddy-feed-active ._feed_inner_text_area_box_form textarea._textarea {
   padding-top: 14px !important;
 }
@@ -101,7 +101,7 @@ body.buddy-feed-active ._header_nav_profile {
   position: relative;
 }
 
-/* Navbar avatar: template `_header_nav_profile_image` is 24px — too small for initials avatar */
+
 body.buddy-feed-active ._header_nav_profile_image {
   flex: 0 0 40px !important;
   width: 40px !important;
@@ -142,7 +142,7 @@ body.buddy-feed-active ._header_form {
   min-width: 0;
 }
 
-/* Story row: align card tops and equal column stretch */
+
 body.buddy-feed-active ._feed_inner_ppl_card > .row {
   align-items: stretch;
 }
@@ -174,10 +174,7 @@ body.buddy-feed-active ._feed_inner_public_story_image ._public_story_img {
   min-height: 120px;
 }
 
-/*
- * Composer bottom: template uses fixed height: 64px on ._feed_inner_text_area_bottom
- * and ._feed_inner_text_mobile — that clips/overlaps when we stack media + meta rows.
- */
+
 body.buddy-feed-active ._feed_inner_text_area_bottom {
   height: auto !important;
   min-height: 0;
@@ -208,7 +205,7 @@ body.buddy-feed-active ._feed_inner_text_mobile > ._feed_inner_text_area_item {
   border-radius: 0;
 }
 
-/* Composer: second row — single tint lives on parent bar; no second blue layer */
+
 body.buddy-feed-active ._buddy_composer_meta_row {
   display: flex;
   align-items: center;
@@ -262,13 +259,13 @@ body.buddy-feed-active ._buddy_composer_meta_row ._feed_inner_text_area_btn_link
   width: auto !important;
 }
 
-/* responsive.css (992–1199px) adds margin-bottom + full-width Post — undo for Buddy */
+
 body.buddy-feed-active ._feed_inner_text_area_bottom ._feed_inner_text_area_item,
 body.buddy-feed-active ._feed_inner_text_mobile ._feed_inner_text_area_item {
   margin: 0 !important;
 }
 
-/* Keep Buddy composer actions on one row at all breakpoints (override responsive.css full-width rules). */
+
 body.buddy-feed-active ._feed_inner_text_area_bottom {
   flex-wrap: nowrap !important;
 }
@@ -289,7 +286,7 @@ body.buddy-feed-active ._feed_inner_text_area_bottom ._feed_inner_text_area_btn_
   width: auto !important;
 }
 
-/* Comment row: template uses width:100% on flex children — textarea draws over the avatar */
+
 body.buddy-feed-active ._feed_inner_comment_box_content {
   flex: 1 1 auto !important;
   min-width: 0 !important;
@@ -313,7 +310,7 @@ body.buddy-feed-active ._comment_textarea {
   box-sizing: border-box;
 }
 
-/* Reaction bar: primary reaction; full reaction picker opens on hover */
+
 body.buddy-feed-active ._buddy_timeline_reaction_primary {
   position: relative;
   display: flex;
@@ -340,13 +337,13 @@ body.buddy-feed-active ._feed_inner_timeline_reaction_share._feed_reaction {
   min-width: 0;
 }
 
-/* Stats row: keep comment/share counts on one baseline */
+
 body.buddy-feed-active ._feed_inner_timeline_total_reacts_txt {
   align-items: center;
   gap: 12px;
 }
 
-/* Facepile: overlapping avatars + blue overflow (Buddy stats row) */
+
 body.buddy-feed-active ._buddy_fb_facepile {
   display: flex;
   flex-direction: row;
@@ -415,9 +412,8 @@ body.buddy-feed-active ._feed_inner_timeline_total_reacts_para2 {
   line-height: 1.2;
 }
 
-/* Facebook-style post footer: stats, reaction row icons, pill composer, comment bubbles */
-/* Comment count control must NOT use `_feed_timeline_dropdown_link` — in main.css,
-   `._feed_timeline_dropdown_link span` adds blue circular pills to every child span. */
+
+
 body.buddy-feed-active ._buddy_fb_stat_comment_btn {
   display: inline-flex;
   align-items: baseline;

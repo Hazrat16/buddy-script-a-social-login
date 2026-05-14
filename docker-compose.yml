@@ -3,7 +3,6 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     ports:
-      # Host 5433 avoids conflict when another Postgres already uses 5432 on your machine.
       - "5433:5432"
     environment:
       POSTGRES_USER: postgres

@@ -1,12 +1,12 @@
-/*----- Desktop Version Css Start ------*/
-/*------Main Layout Css --------*/
+
+
 ._main_layout {
     width: 100%;
     height: 100vh;
     background-color: var(--bcolor1);
     overflow: hidden;
 }
-/*-- Layout Switching Btn Css ---- */
+
 ._layout_mode_swithing_btn {
     position: fixed;
     top:50%;
@@ -62,7 +62,7 @@
     visibility: hidden;
     opacity: 0;
 }
-/*-- Layout Switching Btn Css End ---- */
+
 ._layout_left_wrap {
     padding:10px 0 0;
 }
@@ -172,7 +172,7 @@
     overflow: hidden;
     padding:10px 0 0;
 }
-/* Hiding scrollbar */
+
 ._layout_middle_wrap::-webkit-scrollbar {
     display: none;
 }
@@ -180,11 +180,11 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
-/* Hiding scrollbar */
 
-/*------Main Layout Css --------*/
 
-/*------Login Css --------*/
+
+
+
 ._social_login_wrapper {
     padding: 100px 0px;
     background: var(--bg1);
@@ -367,9 +367,9 @@
     color: var(--color);
     line-height: 1.4;
 }
-/*------Login Css End --------*/
 
-/*------ Registration Css --------*/
+
+
 ._right_logo {
     max-width: 161px;
     margin:0 auto;
@@ -521,10 +521,10 @@
 ._social_registration_bottom_txt_para a {
     color: var(--color5);
 }
-/*------ Registration Css End --------*/
 
-/*------ Header Css ---------------*/
-/*------ Desktop Menu --------*/
+
+
+
 ._header_nav_shadow {
     -webkit-box-shadow: 0px 4px 16px #F0F2F5;
     box-shadow: 0px 4px 16px #F0F2F5;
@@ -870,9 +870,9 @@
     background: transparent;
     margin: -3px 0 0 8px;
 }
-/*------ Desktop Menu End --------*/
 
-/*------ Mobile Menu --------*/
+
+
 ._header_mobile_menu{
     display: none;
     padding: 16px 16px 0;
@@ -912,11 +912,11 @@
     margin: 0 16px 0 0;
     cursor:pointer;
 }
-/*------ Mobile Menu End --------*/
 
-/*------ Header Css End ---------------*/
 
-/*------ Feed Css ------------*/
+
+
+
 ._feed_wrapper {
     padding: 100px 0px;
 }
@@ -2016,9 +2016,9 @@
     background: transparent;
     margin: 0 4px;
 }
-/*------ Feed Css End ------------*/
 
-/*------Group Categories Css --------*/
+
+
 ._group_categories_wrapper {
     padding:110px 0 0;
 }
@@ -2076,95 +2076,10 @@
     color:var(--bg2);
     background:var(--color5);
 }
-/* ._group_categories_arrow_left {
-    left: -18px;
-    position: absolute;
-    top: 50%;
-    z-index: 22;
-    -webkit-transform: translateY(-50%);
-        -ms-transform: translateY(-50%);
-            transform: translateY(-50%);
-} */
-/* ._group_categories_arrow_left_link{
-    -webkit-transition:.2s all ease;
-    -o-transition:.2s all ease;
-    transition:.2s all ease;
-    background: -webkit-gradient(linear, left bottom, left top, from(#FFFFFF), to(#FFFFFF)), var(--color3);
-    background: -o-linear-gradient(bottom, #FFFFFF, #FFFFFF), var(--color3);
-    background: linear-gradient(0deg, #FFFFFF, #FFFFFF), var(--color3);
-    border: 2px solid var(--color5);
-    width: 40px;
-    height: 40px;
-    display: -webkit-box;
-    display: -ms-flexbox;
-    display: flex;
-    -webkit-box-align: center;
-        -ms-flex-align: center;
-            align-items: center;
-    -webkit-box-pack: center;
-        -ms-flex-pack: center;
-            justify-content: center;
-    border-radius: 50%;
-} */
-/* ._group_categories_arrow_right {
-    right: -18px;
-    position: absolute;
-    top: 50%;
-    z-index: 22;
-    -webkit-transform: translateY(-50%);
-        -ms-transform: translateY(-50%);
-            transform: translateY(-50%);
-}
-._group_categories_arrow_right_link{
-    -webkit-transition:.2s all ease;
-    -o-transition:.2s all ease;
-    transition:.2s all ease;
-    background: -webkit-gradient(linear, left bottom, left top, from(#FFFFFF), to(#FFFFFF)), var(--color3);
-    background: -o-linear-gradient(bottom, #FFFFFF, #FFFFFF), var(--color3);
-    background: linear-gradient(0deg, #FFFFFF, #FFFFFF), var(--color3);
-    border: 2px solid var(--color5);
-    width: 40px;
-    height: 40px;
-    display: -webkit-box;
-    display: -ms-flexbox;
-    display: flex;
-    -webkit-box-align: center;
-        -ms-flex-align: center;
-            align-items: center;
-    -webkit-box-pack: center;
-        -ms-flex-pack: center;
-            justify-content: center;
-    border-radius: 50%;
-} */
-/* ._group_categories_arrow_left_link:hover {
-    background: -webkit-gradient(linear, left bottom, left top, from(#1890FF), to(#1890FF)), var(--color3);
-    background: -o-linear-gradient(bottom, #1890FF, #1890FF), var(--color3);
-    background: linear-gradient(0deg, #1890FF, #1890FF), var(--color3);;
-    border: 2px solid var(--bg2);
-    -webkit-box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.1);
-            box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.1);
-}
-._group_categories_arrow_right_link path {
-    -webkit-transition:.2s all ease;
-    -o-transition:.2s all ease;
-    transition:.2s all ease;
-}
-._group_categories_arrow_right_link:hover {
-    background: -webkit-gradient(linear, left bottom, left top, from(#1890FF), to(#1890FF)), var(--color3);
-    background: -o-linear-gradient(bottom, #1890FF, #1890FF), var(--color3);
-    background: linear-gradient(0deg, #1890FF, #1890FF), var(--color3);;
-    border: 2px solid var(--bg2);
-    -webkit-box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.1);
-            box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.1);
-}
-._group_categories_arrow_left_link path {
-    -webkit-transition:.2s all ease;
-    -o-transition:.2s all ease;
-    transition:.2s all ease;
-}
-._arrow_hover:hover path {
-    fill:var(--bg2);
-} */
+
+
+
+
 ._group_categories_card_image {
     position: relative;
     z-index: 2;
@@ -2200,9 +2115,9 @@
 ._grp_cat_img {
     border-radius: 6px;
 }
-/*------ Group Categories Css Ends--------*/
 
-/*----- Group Recommend Css --------*/
+
+
 ._group_recommend_card_inner {
     background: var(--bg2);
     border-radius: 6px;
@@ -2261,9 +2176,9 @@
 ._group_recommend_card_wrap {
     position: relative;
 }
-/*----- Group Recommend Css End --------*/
 
-/*----- Discover Event Css  --------*/
+
+
 ._discover_event_wrapper {
     padding:110px 0 0;
 }
@@ -2390,9 +2305,9 @@
 ._discover_event_inner_card_btn_link span svg {
     margin:0 8px 0 0;
 }
-/*----- Discover Event Css End --------*/
 
-/*----- Top Content Css --------*/
+
+
 ._top_event_single_image_area {
     padding: 72px 0 0;
 }
@@ -2561,7 +2476,7 @@
 ._top_inner_dropdown_item {
     margin: 0 0 10px;
 }
-/*----- Top Content Css End --------*/
+
 ._left_inner_area_friends_content_info {
     display: -webkit-box;
     display: -ms-flexbox;
@@ -2663,7 +2578,7 @@
     border-radius: 6px;
     margin:0 0 16px 0;
 }
-/*------ Layout Middile Css ---------*/
+
 ._layout_midle_title_box_content {
     display: -webkit-box;
     display: -ms-flexbox;
@@ -2773,7 +2688,7 @@
     line-height: 24px;
     color: #8A8A8A;
 }
-/*----- Profile Css -------*/
+
 ._profile_cover_wrap {
     position: relative;
 }
@@ -3024,9 +2939,9 @@
 ._arrow_bg {
     background:var(--bg2);
 }
-/*------ Layout Middile Css End ---------*/
 
-/*--- Top Single Image ------*/
+
+
 ._top_single_img1 {
     -o-object-fit: contain;
        object-fit: contain;
@@ -3066,7 +2981,7 @@
     line-height: 1.2;
     color: rgba(0, 0, 0, 0.46);
 }
-/*---- css ------*/
+
 ._layout_left_about_inner_info {
     display: -webkit-box;
     display: -ms-flexbox;
@@ -3234,7 +3149,7 @@
     color: var(--bg2);
     background: var(--color5);
 }
-/*-------- Custom Container -------*/
+
 ._nav_custom_container {
     width: 100%;
     display: -webkit-box;
@@ -3254,7 +3169,7 @@
 ._container_fluid_custom {
     width: 100%;
 }
-/*--- Dark Feed01 Css -----*/
+
 ._dark_wrapper ._chat_left_dropdown {
     background:var(--bg6);
     box-shadow: none;
@@ -3586,7 +3501,7 @@
     visibility: visible;
     opacity: 1;
 }
-/*----- Dark Css For Mobile Nav-----*/
+
 ._dark_wrapper ._header_mobile_menu {
     background: var(--bg5) !important;
 }
@@ -4117,9 +4032,9 @@
     stroke: var(--bg2);
     stroke-opacity:1;
 }
-/*----- Dark Css End For Mobile Nav-----*/
 
-/*-------- Chat Css --------*/
+
+
 ._layout_main {
     height: 100vh;
     display: -webkit-box;
@@ -4760,9 +4675,9 @@
 ._chat_wrapper ._feed_inner_ppl_card_area {
     padding: 8px 16px;
 }
-/*-------- Chat Css End --------*/
 
-/*--- Chat Single Css -----*/
+
+
 ._chat_right_icon {
     margin:0 10px 0 0;
 }
@@ -4833,13 +4748,13 @@
 ._remove_btn_dropdown_link:hover svg line {
     stroke:var(--color5);
 }
-/*--- Chat Single Css End -----*/
 
-/*----- Desktop Version Css End ------*/
 
-/*----- For Mobile Version Css ------*/
 
-/*---- Mobile Menu Dropdown Css -------*/
+
+
+
+
 ._mobile_menu_wrapper {
     height: calc(100vh - -12px);
     overflow: auto;
@@ -4967,9 +4882,9 @@
     background: var(--bg2);
     padding:17px 27px 6px;
 }
-/*---- Mobile Menu Dropdown Css End -------*/
 
-/*-- General Account Css ----*/
+
+
 ._general_account_box {
     background:var(--bg2);
     padding:24px 16px;
@@ -5029,9 +4944,9 @@
     -ms-flex: 0 0 175px;
     flex: 0 0 175px;
 }
-/*-- General Account Css End ----*/
 
-/*---- Security & Login Css -----*/
+
+
 ._security_info_txt {
     padding:16px;
 }
@@ -5085,9 +5000,9 @@
     line-height: 1.2;
     color:var(--color5);
 }
-/*---- Security & Login Css End -----*/
 
-/*---Layout Css For mobile -----*/
+
+
 ._feed_inner_text_area_bottom_mobile {
     display: none;
 }
@@ -5444,9 +5359,9 @@
     -ms-flex-pack: justify;
     justify-content: space-between;
 }
-/*---Layout Css For mobile End -----*/
 
-/*---- Mobile Bottom nav Css ----*/
+
+
 ._mobile_navigation_bottom_wrapper {
     padding: 20px 19px;
     background: var(--bg2);
@@ -5503,9 +5418,9 @@
 ._mobile_navigation_bottom_link:hover svg ._mobile_svg1{
     stroke:var(--color5);
 }
-/*---- Mobile Bottom nav Css End ----*/
 
-/*---- Dropdown Css ----*/
+
+
 ._header_nav_profile {
     position: relative;
 }
@@ -5525,13 +5440,13 @@
     -webkit-transform: translateY(20px);
     -ms-transform: translateY(20px);
     transform: translateY(20px);
-    /* display: none; */
+    
     z-index: 1;
     opacity: 0;
     visibility: hidden;
 }
 .show {
-    /* display: block !important; */
+    
     opacity: 1 !important;
     visibility: visible !important;
     -webkit-transform: translateY(40px);
@@ -5658,11 +5573,11 @@
     border-radius: 50%;
     margin:0 8px 0 0;
 }
-/*---- Dropdown Css End ----*/
 
-/*----- For Mobile Version Css End ------*/
 
-/*---- Friend request Css ------*/
+
+
+
 ._request_wrappper {
     padding:100px 0 30px 0;
 }
@@ -5871,16 +5786,16 @@
 ._friend_icon_btn {
     margin: 0 6px 0;
 }
-/*---- Friend request Css ------*/
 
-/*--- Notifications Mobile css -----*/
+
+
 ._notifications_mobile {
     display: none;
     padding:50px 0;
 }
-/*--- Notifications Mobile css End -----*/
 
-/*---- Comment Reply css -----*/
+
+
 ._timline_comment_main {
     padding: 24px 24px 10px;
 }
@@ -6008,8 +5923,8 @@
     background:transparent;
     outline:none !important;
 }
-/*---- Comment Reply css end -----*/
-/*--- chat mobile seetings css ----*/
+
+
 ._chat_mobile_top {
     display: flex;
     align-items: center;
@@ -6019,4 +5934,3 @@
     height: 30px;
     margin:0 6px 0 0;
 }
-/*--- chat mobile seetings css end ----*/
