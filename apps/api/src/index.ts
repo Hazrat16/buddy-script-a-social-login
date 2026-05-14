@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import path from "node:path";
+import { prisma } from "./lib/prisma";
 import { requireAuth } from "./middleware/requireAuth";
 import { authRouter } from "./routes/auth";
 import { commentsRouter } from "./routes/comments";
@@ -11,16 +12,27 @@ import { getMyPostsHandler, postsRouter } from "./routes/posts";
 import { usersRouter } from "./routes/users";
 
 const app = express();
+app.set("trust proxy", 1);
 const PORT = Number(process.env.API_PORT) || 3001;
 const WEB_ORIGIN = process.env.WEB_ORIGIN || "http://localhost:3000";
 
 app.get("/health", (_req, res) => {
-  res.status(200).json({ ok: true });
+  res.status(200).json({ ok: true, service: "buddy-api" });
 });
 
 app.use(cors({ origin: WEB_ORIGIN, credentials: true }));
 app.use(cookieParser());
 app.use(express.json());
+
+/** Same payload as `/health`, plus DB connectivity (for monitoring via `/api/*` or Vercel proxy). */
+app.get("/api/health", async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.status(200).json({ ok: true, service: "buddy-api", db: "connected" });
+  } catch {
+    res.status(503).json({ ok: false, service: "buddy-api", db: "disconnected" });
+  }
+});
 
 const uploadsDir = path.join(process.cwd(), "uploads");
 app.use("/uploads", express.static(uploadsDir));

@@ -27,6 +27,7 @@ export default function LoginPage() {
     setErr(null);
     setLoading(true);
     try {
+      // Same-origin /api → Vercel proxies to Railway (API_INTERNAL_URL). Required so Set-Cookie applies to this host.
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

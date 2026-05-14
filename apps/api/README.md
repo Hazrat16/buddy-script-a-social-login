@@ -12,3 +12,10 @@ Local DB: from repo root run `npm run docker:up` (Postgres on **localhost:5433**
 - `npm run db:push` / `db:studio` — Prisma
 
 Uploads are stored under `apps/api/uploads` and served at `/uploads`.
+
+## Health
+
+| Method | Path | CORS | Body |
+|--------|------|------|------|
+| `GET` | `/health` | Before CORS middleware | `{ "ok": true, "service": "buddy-api" }` — use for Railway/uptime probes (no `/api` prefix). |
+| `GET` | `/api/health` | Yes | `200` `{ "ok": true, "service": "buddy-api", "db": "connected" }` or `503` if Postgres is unreachable — same path style as other REST routes; works through the Next.js `/api` proxy as `/api/health`. |
