@@ -3,20 +3,36 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { BuddyAuthShapes } from "@/components/marketing/BuddyAuthShapes";
+import { useBuddyAuthAssets } from "@/components/marketing/useBuddyAuthAssets";
+
+function useHeroImgFallback() {
+  return (e: React.SyntheticEvent<HTMLImageElement>) => {
+    e.currentTarget.onerror = null;
+    e.currentTarget.src = "/assets/images/logo.svg";
+  };
+}
 
 export default function RegisterPage() {
+  useBuddyAuthAssets(true);
   const router = useRouter();
+  const onHeroError = useHeroImgFallback();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [repeat, setRepeat] = useState("");
+  const [agreeTerms, setAgreeTerms] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
+    if (!agreeTerms) {
+      setErr("Please agree to the terms & conditions.");
+      return;
+    }
     if (password !== repeat) {
       setErr("Passwords do not match.");
       return;
@@ -42,143 +58,168 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col lg:flex-row">
-      <div className="relative hidden flex-1 flex-col justify-between overflow-hidden bg-gradient-to-br from-violet-600 via-indigo-600 to-slate-900 p-10 text-white lg:flex lg:p-14">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%23ffffff%22%20fill-opacity%3D%220.06%22%3E%3Cpath%20d%3D%22M36%2034v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6%2034v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6%204V0H4v4H0v2h4v4h2V6h4V4H6z%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E')] opacity-80" />
-        <div className="relative">
-          <Link href="/" className="inline-flex items-center gap-2 text-lg font-bold">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 backdrop-blur">B</span>
-            Buddy
-          </Link>
-        </div>
-        <div className="relative max-w-md space-y-4">
-          <h2 className="text-3xl font-bold leading-tight tracking-tight">Join in under a minute.</h2>
-          <p className="text-violet-100/90">One feed for updates, images, and threaded comments — without the clutter.</p>
-        </div>
-        <p className="relative text-sm text-violet-200/80">8+ character password · email must be unique</p>
-      </div>
-
-      <div className="flex flex-1 flex-col justify-center px-4 py-12 sm:px-8 lg:px-12">
-        <div className="mx-auto w-full max-w-md">
-          <div className="mb-8 lg:hidden">
-            <Link href="/" className="inline-flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-sm font-bold text-white">
-                B
-              </span>
-              Buddy
-            </Link>
-          </div>
-
-          <div className="rounded-3xl border border-slate-200/80 bg-white/90 p-8 shadow-card backdrop-blur dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-card-dark sm:p-10">
-            <div className="mb-8 flex items-center gap-3">
-              <img src="/assets/images/logo.svg" alt="" width={40} height={40} className="h-10 w-10 dark:invert" />
-              <div>
-                <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400">Create account</p>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Sign up for Buddy</h1>
+    <section className="_social_registration_wrapper _layout_main_wrapper">
+      <BuddyAuthShapes />
+      <div className="_social_registration_wrap">
+        <div className="container">
+          <div className="row align-items-center">
+            <div className="col-xl-8 col-lg-8 col-md-12 col-sm-12">
+              <div className="_social_registration_right">
+                <div className="_social_registration_right_image">
+                  <img src="/assets/images/registration.png" alt="" onError={onHeroError} />
+                </div>
+                <div className="_social_registration_right_image_dark">
+                  <img src="/assets/images/registration1.png" alt="" onError={onHeroError} />
+                </div>
               </div>
             </div>
-
-            <form className="space-y-4" onSubmit={onSubmit}>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="reg-fn" className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                    First name
-                  </label>
-                  <input
-                    id="reg-fn"
-                    type="text"
-                    autoComplete="given-name"
-                    required
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                  />
+            <div className="col-xl-4 col-lg-4 col-md-12 col-sm-12">
+              <div className="_social_registration_content">
+                <div className="_social_registration_right_logo _mar_b28">
+                  <img src="/assets/images/logo.svg" alt="" className="_right_logo" />
                 </div>
-                <div>
-                  <label htmlFor="reg-ln" className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Last name
-                  </label>
-                  <input
-                    id="reg-ln"
-                    type="text"
-                    autoComplete="family-name"
-                    required
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                  />
+                <p className="_social_registration_content_para _mar_b8">Get Started Now</p>
+                <h4 className="_social_registration_content_title _titl4 _mar_b50">Registration</h4>
+                <button type="button" className="_social_registration_content_btn _mar_b40" title="Google sign-up is not enabled">
+                  <img src="/assets/images/google.svg" alt="" className="_google_img" /> <span>Register with google</span>
+                </button>
+                <div className="_social_registration_content_bottom_txt _mar_b40">
+                  {" "}
+                  <span>Or</span>
+                </div>
+                <form className="_social_registration_form" onSubmit={onSubmit}>
+                  <div className="row">
+                    <div className="col-xl-6 col-lg-6 col-md-6 col-sm-12">
+                      <div className="_social_registration_form_input _mar_b14">
+                        <label className="_social_registration_label _mar_b8" htmlFor="reg-fn">
+                          First name
+                        </label>
+                        <input
+                          id="reg-fn"
+                          type="text"
+                          autoComplete="given-name"
+                          required
+                          className="form-control _social_registration_input"
+                          value={firstName}
+                          onChange={(e) => setFirstName(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="col-xl-6 col-lg-6 col-md-6 col-sm-12">
+                      <div className="_social_registration_form_input _mar_b14">
+                        <label className="_social_registration_label _mar_b8" htmlFor="reg-ln">
+                          Last name
+                        </label>
+                        <input
+                          id="reg-ln"
+                          type="text"
+                          autoComplete="family-name"
+                          required
+                          className="form-control _social_registration_input"
+                          value={lastName}
+                          onChange={(e) => setLastName(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                      <div className="_social_registration_form_input _mar_b14">
+                        <label className="_social_registration_label _mar_b8" htmlFor="reg-email">
+                          Email
+                        </label>
+                        <input
+                          id="reg-email"
+                          type="email"
+                          autoComplete="email"
+                          required
+                          className="form-control _social_registration_input"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                      <div className="_social_registration_form_input _mar_b14">
+                        <label className="_social_registration_label _mar_b8" htmlFor="reg-pw">
+                          Password
+                        </label>
+                        <input
+                          id="reg-pw"
+                          type="password"
+                          autoComplete="new-password"
+                          required
+                          minLength={8}
+                          className="form-control _social_registration_input"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                      <div className="_social_registration_form_input _mar_b14">
+                        <label className="_social_registration_label _mar_b8" htmlFor="reg-pw2">
+                          Repeat Password
+                        </label>
+                        <input
+                          id="reg-pw2"
+                          type="password"
+                          autoComplete="new-password"
+                          required
+                          className="form-control _social_registration_input"
+                          value={repeat}
+                          onChange={(e) => setRepeat(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  {err ? (
+                    <div className="row">
+                      <div className="col-12">
+                        <p className="_notification_para" style={{ color: "#c00", marginBottom: 12 }}>
+                          {err}
+                        </p>
+                      </div>
+                    </div>
+                  ) : null}
+                  <div className="row">
+                    <div className="col-lg-12 col-xl-12 col-md-12 col-sm-12">
+                      <div className="form-check _social_registration_form_check">
+                        <input
+                          className="form-check-input _social_registration_form_check_input"
+                          type="checkbox"
+                          id="regTermsRadio"
+                          checked={agreeTerms}
+                          onChange={(e) => setAgreeTerms(e.target.checked)}
+                        />
+                        <label className="form-check-label _social_registration_form_check_label" htmlFor="regTermsRadio">
+                          I agree to terms & conditions
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="row">
+                    <div className="col-lg-12 col-md-12 col-xl-12 col-sm-12">
+                      <div className="_social_registration_form_btn _mar_t40 _mar_b60">
+                        <button type="submit" className="_social_registration_form_btn_link _btn1" disabled={loading}>
+                          {loading ? "Creating account…" : "Register now"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+                <div className="row">
+                  <div className="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                    <div className="_social_registration_bottom_txt">
+                      <p className="_social_registration_bottom_txt_para">
+                        Already have an account? <Link href="/login">Log in</Link>
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div>
-                <label htmlFor="reg-email" className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Email
-                </label>
-                <input
-                  id="reg-email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div>
-                <label htmlFor="reg-pw" className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Password
-                </label>
-                <input
-                  id="reg-pw"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  minLength={8}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                  placeholder="8+ characters"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-              <div>
-                <label htmlFor="reg-pw2" className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Confirm password
-                </label>
-                <input
-                  id="reg-pw2"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                  value={repeat}
-                  onChange={(e) => setRepeat(e.target.value)}
-                />
-              </div>
-
-              {err ? (
-                <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
-                  {err}
-                </p>
-              ) : null}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="mt-2 w-full rounded-xl bg-indigo-600 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {loading ? "Creating account…" : "Create account"}
-              </button>
-            </form>
-
-            <p className="mt-8 text-center text-sm text-slate-600 dark:text-slate-400">
-              Already have an account?{" "}
-              <Link href="/login" className="font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
-                Log in
-              </Link>
-            </p>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

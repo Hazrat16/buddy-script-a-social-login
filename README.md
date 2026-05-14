@@ -34,6 +34,8 @@ The **database URL is only in the API** (`apps/api/.env`), not in the web app.
 
 **Example (Postgres already on your machine, default port):** `postgresql://USER:PASSWORD@localhost:5432/DBNAME?schema=public`
 
+**Production (Neon):** set `DATABASE_URL` on the **API** service to your Neon connection string (pooled host recommended). Include `sslmode=require`; Neon may also suggest `channel_binding=require`. Run `npm run db:push -w api` once against that database so tables exist. Do not commit credentials—use your host’s secret / environment UI only.
+
 Templates: `apps/api/.env.example`, `apps/web/.env.example`, root `.env.example`.
 
 ## Scripts (root)
