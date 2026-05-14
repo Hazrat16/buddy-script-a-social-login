@@ -101,8 +101,12 @@ export async function proxyApiRequest(request: NextRequest): Promise<Response> {
   };
 
   if (request.method !== "GET" && request.method !== "HEAD") {
-    init.body = request.body;
-    init.duplex = "half";
+    const body = request.body;
+    /** `duplex: "half"` is only valid with a real stream; OPTIONS / DELETE-without-body leave `body` null and undici throws "expected non-null body source". */
+    if (body != null) {
+      init.body = body;
+      init.duplex = "half";
+    }
   }
 
   try {
