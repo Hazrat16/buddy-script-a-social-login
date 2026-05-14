@@ -57,9 +57,12 @@ app.use("/api/users", usersRouter);
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);
   if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2021") {
+    const prod = process.env.NODE_ENV === "production";
     res.status(503).json({
-      error:
-        "Database tables are missing. From the repo root: npm run docker:up (if you use Compose), then npm run db:push",
+      error: "Database tables are missing (Prisma: referenced table does not exist).",
+      hint: prod
+        ? "On your API host (e.g. Railway): ensure DATABASE_URL points at Postgres, then apply the schema once — from your machine: `cd apps/api && DATABASE_URL='…' npx prisma db push`, or add a Railway deploy/release step that runs `npx prisma db push` before `node dist/index.js`."
+        : "From the repo root: npm run docker:up (if you use Compose), then npm run db:push",
     });
     return;
   }
