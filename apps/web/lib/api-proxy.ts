@@ -3,12 +3,18 @@ import { NextResponse } from "next/server";
 
 /**
  * Resolve at **request time** (not module load). Prefer `NEXT_API_BASE_URL`; `API_INTERNAL_URL` is still read as a legacy fallback.
+ * On Vercel, a base URL is **required** — never default to localhost (that would hide a missing env and bypass Railway).
  */
-function getBackendBase(): string {
+function getBackendBase(): string | null {
   const raw =
     process.env["NEXT_API_BASE_URL"]?.trim() || process.env["API_INTERNAL_URL"]?.trim();
-  const s = typeof raw === "string" && raw.trim() ? raw.trim() : "http://127.0.0.1:3001";
-  return s.replace(/\/$/, "");
+  if (typeof raw === "string" && raw.trim()) {
+    return raw.trim().replace(/\/$/, "");
+  }
+  if (process.env.VERCEL) {
+    return null;
+  }
+  return "http://127.0.0.1:3001";
 }
 
 /** Headers that must not be forwarded to Node fetch / upstream. */
@@ -38,6 +44,16 @@ function forwardHeaders(request: NextRequest): Headers {
  */
 export async function proxyApiRequest(request: NextRequest): Promise<Response> {
   const backend = getBackendBase();
+  if (backend === null) {
+    return NextResponse.json(
+      {
+        error: "API base URL is not configured",
+        hint:
+          "On Vercel, set NEXT_API_BASE_URL to your API origin (e.g. https://…railway.app) for **Production**, **Preview**, and **Build**, then redeploy.",
+      },
+      { status: 503 },
+    );
+  }
   const target = `${backend}${request.nextUrl.pathname}${request.nextUrl.search}`;
   const headers = forwardHeaders(request);
 
@@ -57,8 +73,16 @@ export async function proxyApiRequest(request: NextRequest): Promise<Response> {
     const res = await fetch(target, init);
     const outHeaders = new Headers();
     res.headers.forEach((value, key) => {
-      if (!hopByHop.has(key.toLowerCase())) outHeaders.set(key, value);
+      const k = key.toLowerCase();
+      if (hopByHop.has(k)) return;
+      // Never use set() for Set-Cookie: upstream may send multiple; set() keeps only the last.
+      if (k === "set-cookie") return;
+      outHeaders.set(key, value);
     });
+    const cookies = res.headers.getSetCookie?.() ?? [];
+    for (const c of cookies) {
+      outHeaders.append("Set-Cookie", c);
+    }
 
     try {
       outHeaders.set("x-upstream-host", new URL(backend).hostname);
@@ -74,11 +98,6 @@ export async function proxyApiRequest(request: NextRequest): Promise<Response> {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    const onVercel = Boolean(process.env.VERCEL);
-    const missingUpstream =
-      onVercel &&
-      !process.env["NEXT_API_BASE_URL"]?.trim() &&
-      !process.env["API_INTERNAL_URL"]?.trim();
     return NextResponse.json(
       {
         error: "Cannot reach API backend",
@@ -89,9 +108,7 @@ export async function proxyApiRequest(request: NextRequest): Promise<Response> {
             return "invalid-NEXT_API_BASE_URL";
           }
         })(),
-        hint: missingUpstream
-          ? "On Vercel, set NEXT_API_BASE_URL to your Railway API URL and enable it for **Build** and **Production**, then redeploy. (Legacy: API_INTERNAL_URL still works.)"
-          : `Check that the API is running and NEXT_API_BASE_URL matches it (currently targeting ${backend}).`,
+        hint: `Check that the API is running and NEXT_API_BASE_URL matches it (currently targeting ${backend}).`,
         detail: msg,
       },
       { status: 502 },

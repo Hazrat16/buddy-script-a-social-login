@@ -1,11 +1,20 @@
 import type { NextConfig } from "next";
 
 /** Build-time: set `NEXT_API_BASE_URL` on Vercel for "Build" so `/uploads` rewrites and image hosts match production. Legacy: `API_INTERNAL_URL`. */
-const apiInternal = (
-  (process.env["NEXT_API_BASE_URL"] as string | undefined)?.trim().replace(/\/$/, "") ||
-  (process.env["API_INTERNAL_URL"] as string | undefined)?.trim().replace(/\/$/, "") ||
-  "http://127.0.0.1:3001"
-);
+const nextApiBase =
+  (process.env["NEXT_API_BASE_URL"] as string | undefined)?.trim().replace(/\/$/, "") || "";
+const legacyApiBase =
+  (process.env["API_INTERNAL_URL"] as string | undefined)?.trim().replace(/\/$/, "") || "";
+const apiInternal =
+  nextApiBase ||
+  legacyApiBase ||
+  (process.env.VERCEL
+    ? (() => {
+        throw new Error(
+          "NEXT_API_BASE_URL is required on Vercel. Add it in Project → Environment Variables and enable it for **Building** (and each runtime environment), then redeploy.",
+        );
+      })()
+    : "http://127.0.0.1:3001");
 
 /** Allow `next/image` (if used) to load absolute URLs from the same host as the API base. */
 function apiRemotePattern():
@@ -38,7 +47,7 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     return {
-      /** `/api/*` is proxied by `app/api/[[...path]]/route.ts` (see `lib/api-proxy.ts`). */
+      /** `/api/*` is proxied by `app/api/[...path]/route.ts` (see `lib/api-proxy.ts`). */
       fallback: [{ source: "/uploads/:path*", destination: `${apiInternal}/uploads/:path*` }],
     };
   },
