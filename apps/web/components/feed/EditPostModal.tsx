@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { resolvePostImageSrc } from "@/lib/post-image-url";
 import type { FeedPost, PublicUser } from "./feed-types";
 import { displayName } from "./feed-types";
 import { UserAvatar } from "../ui/UserAvatar";
@@ -103,7 +104,7 @@ export function EditPostModal({ open, onClose, post, currentUser, onSaved }: Pro
     }
     if (!open)
         return null;
-    const displayImg = objectUrl || (!stripImage && post.imageUrl ? post.imageUrl : null);
+    const displayImg = objectUrl || (!stripImage && post.imageUrl ? (resolvePostImageSrc(post.imageUrl) ?? post.imageUrl) : null);
     return (<div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-slate-900/60 p-4 pt-10 backdrop-blur-sm sm:pt-16" role="presentation" onMouseDown={(e) => {
             if (e.target === e.currentTarget)
                 onClose();

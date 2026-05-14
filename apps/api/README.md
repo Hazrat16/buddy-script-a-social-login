@@ -13,6 +13,8 @@ Local DB: from repo root run `npm run docker:up` (Postgres on **localhost:5433**
 
 Uploads are stored under `apps/api/uploads` and served at `/uploads`.
 
+In production (e.g. Next on Vercel + API on Railway), browsers should load images from the **public API host**, not only through Next rewrites. Set **`API_PUBLIC_URL`** on the API (same value as your public `https://…` API base, no path) so JSON post payloads use absolute `imageUrl` values like `https://…railway.app/uploads/…`. Optionally set **`NEXT_PUBLIC_UPLOADS_ORIGIN`** on the Next app to the same origin as a client-side fallback when responses still contain relative `/uploads/…` paths.
+
 ## Health
 
 | Method | Path | CORS | Body |

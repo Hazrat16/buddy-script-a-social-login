@@ -1,6 +1,7 @@
 "use client";
 import { useComingSoon } from "@/components/ui/ComingSoonProvider";
 import { getMyReactionForPost, getNotifyPostIds, getShareCounts, incrementShareCount, isPostSaved, reactionMeta, setMyPostReaction, setPostHidden, setPostNotify, setPostSaved, type UiReaction, } from "@/lib/feed-local";
+import { resolvePostImageSrc } from "@/lib/post-image-url";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { UserAvatar } from "../ui/UserAvatar";
 import { EditPostModal } from "./EditPostModal";
@@ -382,6 +383,7 @@ export function PostCard({ post, currentUser, onPostUpdated, onPostDeleted, onPo
     const menuRef = useRef<HTMLDivElement>(null);
     const pickerRef = useRef<HTMLDivElement>(null);
     const { showComingSoon } = useComingSoon();
+    const postImageSrc = resolvePostImageSrc(p.imageUrl);
     const reactionPickerHoverCloseTimerRef = useRef<number | null>(null);
     const clearReactionPickerHoverTimer = useCallback(() => {
         if (reactionPickerHoverCloseTimerRef.current) {
@@ -713,8 +715,8 @@ export function PostCard({ post, currentUser, onPostUpdated, onPostDeleted, onPo
           <h4 className="_feed_inner_timeline_post_title" style={{ whiteSpace: "pre-wrap", fontWeight: 400 }}>
             {p.body}
           </h4>
-          {p.imageUrl ? (<div className="_feed_inner_timeline_image">
-              <img src={p.imageUrl} alt="" className="_time_img"/>
+          {postImageSrc ? (<div className="_feed_inner_timeline_image">
+              <img src={postImageSrc} alt="" className="_time_img"/>
             </div>) : null}
         </div>
 
@@ -954,8 +956,8 @@ export function PostCard({ post, currentUser, onPostUpdated, onPostDeleted, onPo
         <p className="mt-4 whitespace-pre-wrap text-[15px] leading-relaxed text-slate-800 dark:text-slate-100">
           {p.body}
         </p>
-        {p.imageUrl ? (<div className="mt-4 overflow-hidden rounded-xl border border-slate-100 dark:border-slate-800">
-            <img src={p.imageUrl} alt="" className="max-h-[420px] w-full object-cover"/>
+        {postImageSrc ? (<div className="mt-4 overflow-hidden rounded-xl border border-slate-100 dark:border-slate-800">
+            <img src={postImageSrc} alt="" className="max-h-[420px] w-full object-cover"/>
           </div>) : null}
       </div>
 

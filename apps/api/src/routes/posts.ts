@@ -7,6 +7,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import multer from "multer";
 import { asyncHandler } from "../lib/asyncHandler";
+import { publicImageUrlForJson } from "../lib/publicAssetUrl";
 import { prisma } from "../lib/prisma";
 import { requireAuth } from "../middleware/requireAuth";
 const PAGE = 15;
@@ -123,7 +124,7 @@ export const getMyPostsHandler: RequestHandler = asyncHandler(async (req, res) =
     const data = slice.map((p) => ({
         id: p.id,
         body: p.body,
-        imageUrl: p.imageUrl,
+        imageUrl: publicImageUrlForJson(p.imageUrl),
         visibility: p.visibility,
         createdAt: p.createdAt.toISOString(),
         updatedAt: p.updatedAt.toISOString(),
@@ -190,7 +191,7 @@ postsRouter.get("/", requireAuth, asyncHandler(async (req, res) => {
     const data = slice.map((p) => ({
         id: p.id,
         body: p.body,
-        imageUrl: p.imageUrl,
+        imageUrl: publicImageUrlForJson(p.imageUrl),
         visibility: p.visibility,
         createdAt: p.createdAt.toISOString(),
         updatedAt: p.updatedAt.toISOString(),
@@ -288,14 +289,7 @@ postsRouter.post("/", requireAuth, (req, res, next) => {
         post: {
             id: post.id,
             body: post.body,
-            imageUrl: post.imageUrl,
-            visibility: post.visibility,
-            createdAt: post.createdAt.toISOString(),
-            updatedAt: post.updatedAt.toISOString(),
-            author: post.author,
-            likeCount: post._count.likes,
-            commentCount: post._count.comments,
-            likedByMe: false,
+            imageUrl: publicImageUrlForJson(post.imageUrl),
             likedBy: post.likes.map((l) => ({
                 id: l.user.id,
                 firstName: l.user.firstName,
@@ -420,14 +414,7 @@ postsRouter.patch("/:postId", requireAuth, (req, res, next) => {
         post: {
             id: post!.id,
             body: post!.body,
-            imageUrl: post!.imageUrl,
-            visibility: post!.visibility,
-            createdAt: post!.createdAt.toISOString(),
-            updatedAt: post!.updatedAt.toISOString(),
-            author: post!.author,
-            likeCount: post!._count.likes,
-            commentCount: post!._count.comments,
-            likedByMe: !!myLike,
+            imageUrl: publicImageUrlForJson(post!.imageUrl),
             likedBy: post!.likes.map((l) => ({
                 id: l.user.id,
                 firstName: l.user.firstName,
@@ -655,7 +642,7 @@ postsRouter.get("/:postId", requireAuth, asyncHandler(async (req, res) => {
         post: {
             id: post.id,
             body: post.body,
-            imageUrl: post.imageUrl,
+            imageUrl: publicImageUrlForJson(post.imageUrl),
             visibility: post.visibility,
             createdAt: post.createdAt.toISOString(),
             updatedAt: post.updatedAt.toISOString(),
