@@ -176,17 +176,30 @@ body.buddy-feed-active ._feed_inner_public_story_image ._public_story_img {
 
 
 body.buddy-feed-active ._feed_inner_text_area_bottom {
-  height: auto !important;
-  min-height: 0;
-  flex-direction: column !important;
-  align-items: stretch !important;
-  justify-content: flex-start !important;
-  padding: 0 !important;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  height: 64px !important;
+  min-height: 64px;
+  margin: 10px 0 0 0 !important;
+  padding: 0 15px !important;
+  background: rgba(24, 144, 255, 0.05);
+  border-radius: 0 0 6px 6px;
+  box-sizing: border-box;
 }
 
 body.buddy-feed-active ._feed_inner_text_area_bottom > ._feed_inner_text_area_item {
-  padding: 10px 15px;
-  width: 100%;
+  padding: 0 !important;
+  margin: 0 !important;
+  width: auto !important;
+  max-width: none;
+  flex: 0 1 auto !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 20px;
   border-radius: 0;
 }
 
@@ -265,17 +278,6 @@ body.buddy-feed-active ._feed_inner_text_mobile ._feed_inner_text_area_item {
   margin: 0 !important;
 }
 
-
-body.buddy-feed-active ._feed_inner_text_area_bottom {
-  flex-wrap: nowrap !important;
-}
-
-body.buddy-feed-active ._feed_inner_text_area_bottom ._feed_inner_text_area_item {
-  width: auto !important;
-  flex: 0 1 auto !important;
-  justify-content: flex-start !important;
-}
-
 body.buddy-feed-active ._feed_inner_text_area_bottom ._feed_inner_text_area_btn {
   width: auto !important;
   flex: 0 0 auto !important;
@@ -284,6 +286,26 @@ body.buddy-feed-active ._feed_inner_text_area_bottom ._feed_inner_text_area_btn 
 
 body.buddy-feed-active ._feed_inner_text_area_bottom ._feed_inner_text_area_btn_link {
   width: auto !important;
+}
+
+body.buddy-feed-active ._feed_inner_text_area_bottom ._feed_common {
+  padding: 0 !important;
+}
+
+@media (max-width: 991px) {
+  body.buddy-feed-active ._feed_inner_text_area_bottom {
+    display: flex !important;
+  }
+
+  body.buddy-feed-active ._feed_inner_text_area_bottom_mobile {
+    display: none !important;
+  }
+}
+
+body.buddy-feed-active ._feed_inner_text_area_box_form > ._textarea:focus ~ ._feed_textarea_label,
+body.buddy-feed-active ._feed_inner_text_area_box_form > ._textarea.buddy-composer-has-text ~ ._feed_textarea_label {
+  opacity: 0;
+  transition: 0.2s all ease;
 }
 
 
