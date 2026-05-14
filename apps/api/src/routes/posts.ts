@@ -7,6 +7,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import multer from "multer";
 import { asyncHandler } from "../lib/asyncHandler";
+import { deleteStoredPostImage, isCloudinaryEnabled, uploadPostImageFromBuffer } from "../lib/cloudinaryMedia";
 import { publicImageUrlForJson } from "../lib/publicAssetUrl";
 import { prisma } from "../lib/prisma";
 import { requireAuth } from "../middleware/requireAuth";
@@ -25,18 +26,34 @@ const commentSchema = z.object({
 const jsonPatchSchema = createSchema.extend({
     removeImage: z.boolean().optional(),
 });
-async function unlinkUploadsFile(imageUrl: string | null) {
-    if (!imageUrl?.startsWith("/uploads/"))
-        return;
-    const base = path.basename(imageUrl);
-    if (!base || base.includes("..") || base.includes("/"))
-        return;
-    const fp = path.join(process.cwd(), "uploads", base);
-    try {
-        await fs.unlink(fp);
-    }
-    catch {
-    }
+function feedPostJson(post: {
+    id: string;
+    body: string;
+    imageUrl: string | null;
+    visibility: Visibility;
+    createdAt: Date;
+    updatedAt: Date;
+    author: { id: string; firstName: string; lastName: string };
+    _count: { likes: number; comments: number };
+    likes: Array<{ user: { id: string; firstName: string; lastName: string } }>;
+}, likedByMe: boolean) {
+    return {
+        id: post.id,
+        body: post.body,
+        imageUrl: publicImageUrlForJson(post.imageUrl),
+        visibility: post.visibility,
+        createdAt: post.createdAt.toISOString(),
+        updatedAt: post.updatedAt.toISOString(),
+        author: post.author,
+        likeCount: post._count.likes,
+        commentCount: post._count.comments,
+        likedByMe,
+        likedBy: post.likes.map((l) => ({
+            id: l.user.id,
+            firstName: l.user.firstName,
+            lastName: l.user.lastName,
+        })),
+    };
 }
 function decodeCursor(cursor: string | null | undefined): {
     createdAt: Date;
@@ -121,23 +138,7 @@ export const getMyPostsHandler: RequestHandler = asyncHandler(async (req, res) =
         const last = slice[PAGE - 1]!;
         nextCursor = encodeCursor(last.createdAt, last.id);
     }
-    const data = slice.map((p) => ({
-        id: p.id,
-        body: p.body,
-        imageUrl: publicImageUrlForJson(p.imageUrl),
-        visibility: p.visibility,
-        createdAt: p.createdAt.toISOString(),
-        updatedAt: p.updatedAt.toISOString(),
-        author: p.author,
-        likeCount: p._count.likes,
-        commentCount: p._count.comments,
-        likedByMe: myLikeSet.has(p.id),
-        likedBy: p.likes.map((l) => ({
-            id: l.user.id,
-            firstName: l.user.firstName,
-            lastName: l.user.lastName,
-        })),
-    }));
+    const data = slice.map((p) => feedPostJson(p, myLikeSet.has(p.id)));
     res.json({ posts: data, nextCursor });
 });
 postsRouter.get("/", requireAuth, asyncHandler(async (req, res) => {
@@ -188,23 +189,7 @@ postsRouter.get("/", requireAuth, asyncHandler(async (req, res) => {
         const last = slice[PAGE - 1]!;
         nextCursor = encodeCursor(last.createdAt, last.id);
     }
-    const data = slice.map((p) => ({
-        id: p.id,
-        body: p.body,
-        imageUrl: publicImageUrlForJson(p.imageUrl),
-        visibility: p.visibility,
-        createdAt: p.createdAt.toISOString(),
-        updatedAt: p.updatedAt.toISOString(),
-        author: p.author,
-        likeCount: p._count.likes,
-        commentCount: p._count.comments,
-        likedByMe: myLikeSet.has(p.id),
-        likedBy: p.likes.map((l) => ({
-            id: l.user.id,
-            firstName: l.user.firstName,
-            lastName: l.user.lastName,
-        })),
-    }));
+    const data = slice.map((p) => feedPostJson(p, myLikeSet.has(p.id)));
     res.json({ posts: data, nextCursor });
 }));
 postsRouter.get("/me", requireAuth, getMyPostsHandler);
@@ -242,18 +227,30 @@ postsRouter.post("/", requireAuth, (req, res, next) => {
                 res.status(400).json({ error: "Unsupported image type" });
                 return;
             }
-            const ext = file.mimetype === "image/png"
-                ? "png"
-                : file.mimetype === "image/webp"
-                    ? "webp"
-                    : file.mimetype === "image/gif"
-                        ? "gif"
-                        : "jpg";
-            const name = `${crypto.randomUUID()}.${ext}`;
-            const uploadDir = path.join(process.cwd(), "uploads");
-            await fs.mkdir(uploadDir, { recursive: true });
-            await fs.writeFile(path.join(uploadDir, name), file.buffer);
-            imageUrl = `/uploads/${name}`;
+            if (isCloudinaryEnabled()) {
+                try {
+                    imageUrl = await uploadPostImageFromBuffer(file.buffer, file.mimetype);
+                }
+                catch (err) {
+                    const msg = err instanceof Error ? err.message : String(err);
+                    res.status(502).json({ error: "Could not upload image to cloud storage", detail: msg });
+                    return;
+                }
+            }
+            else {
+                const ext = file.mimetype === "image/png"
+                    ? "png"
+                    : file.mimetype === "image/webp"
+                        ? "webp"
+                        : file.mimetype === "image/gif"
+                            ? "gif"
+                            : "jpg";
+                const name = `${crypto.randomUUID()}.${ext}`;
+                const uploadDir = path.join(process.cwd(), "uploads");
+                await fs.mkdir(uploadDir, { recursive: true });
+                await fs.writeFile(path.join(uploadDir, name), file.buffer);
+                imageUrl = `/uploads/${name}`;
+            }
         }
     }
     else {
@@ -286,16 +283,7 @@ postsRouter.post("/", requireAuth, (req, res, next) => {
         },
     });
     res.json({
-        post: {
-            id: post.id,
-            body: post.body,
-            imageUrl: publicImageUrlForJson(post.imageUrl),
-            likedBy: post.likes.map((l) => ({
-                id: l.user.id,
-                firstName: l.user.firstName,
-                lastName: l.user.lastName,
-            })),
-        },
+        post: feedPostJson(post, false),
     });
 }));
 postsRouter.patch("/:postId", requireAuth, (req, res, next) => {
@@ -344,18 +332,30 @@ postsRouter.patch("/:postId", requireAuth, (req, res, next) => {
                 res.status(400).json({ error: "Unsupported image type" });
                 return;
             }
-            const ext = file.mimetype === "image/png"
-                ? "png"
-                : file.mimetype === "image/webp"
-                    ? "webp"
-                    : file.mimetype === "image/gif"
-                        ? "gif"
-                        : "jpg";
-            const name = `${crypto.randomUUID()}.${ext}`;
-            const uploadDir = path.join(process.cwd(), "uploads");
-            await fs.mkdir(uploadDir, { recursive: true });
-            await fs.writeFile(path.join(uploadDir, name), file.buffer);
-            newImageUrl = `/uploads/${name}`;
+            if (isCloudinaryEnabled()) {
+                try {
+                    newImageUrl = await uploadPostImageFromBuffer(file.buffer, file.mimetype);
+                }
+                catch (err) {
+                    const msg = err instanceof Error ? err.message : String(err);
+                    res.status(502).json({ error: "Could not upload image to cloud storage", detail: msg });
+                    return;
+                }
+            }
+            else {
+                const ext = file.mimetype === "image/png"
+                    ? "png"
+                    : file.mimetype === "image/webp"
+                        ? "webp"
+                        : file.mimetype === "image/gif"
+                            ? "gif"
+                            : "jpg";
+                const name = `${crypto.randomUUID()}.${ext}`;
+                const uploadDir = path.join(process.cwd(), "uploads");
+                await fs.mkdir(uploadDir, { recursive: true });
+                await fs.writeFile(path.join(uploadDir, name), file.buffer);
+                newImageUrl = `/uploads/${name}`;
+            }
         }
     }
     else {
@@ -369,10 +369,10 @@ postsRouter.patch("/:postId", requireAuth, (req, res, next) => {
         removeImage = parsed.data.removeImage === true;
     }
     if (removeImage) {
-        await unlinkUploadsFile(owned.imageUrl);
+        await deleteStoredPostImage(owned.imageUrl);
     }
     else if (newImageUrl) {
-        await unlinkUploadsFile(owned.imageUrl);
+        await deleteStoredPostImage(owned.imageUrl);
     }
     let imageUrlUpdate: string | null | undefined;
     if (removeImage) {
@@ -411,16 +411,7 @@ postsRouter.patch("/:postId", requireAuth, (req, res, next) => {
         where: { postId_userId: { postId, userId: session.sub } },
     });
     res.json({
-        post: {
-            id: post!.id,
-            body: post!.body,
-            imageUrl: publicImageUrlForJson(post!.imageUrl),
-            likedBy: post!.likes.map((l) => ({
-                id: l.user.id,
-                firstName: l.user.firstName,
-                lastName: l.user.lastName,
-            })),
-        },
+        post: feedPostJson(post!, !!myLike),
     });
 }));
 postsRouter.post("/:postId/like", requireAuth, asyncHandler(async (req, res) => {
@@ -639,23 +630,7 @@ postsRouter.get("/:postId", requireAuth, asyncHandler(async (req, res) => {
         where: { postId_userId: { postId, userId: session.sub } },
     });
     res.json({
-        post: {
-            id: post.id,
-            body: post.body,
-            imageUrl: publicImageUrlForJson(post.imageUrl),
-            visibility: post.visibility,
-            createdAt: post.createdAt.toISOString(),
-            updatedAt: post.updatedAt.toISOString(),
-            author: post.author,
-            likeCount: post._count.likes,
-            commentCount: post._count.comments,
-            likedByMe: !!myLike,
-            likedBy: post.likes.map((l) => ({
-                id: l.user.id,
-                firstName: l.user.firstName,
-                lastName: l.user.lastName,
-            })),
-        },
+        post: feedPostJson(post, !!myLike),
     });
 }));
 postsRouter.delete("/:postId", requireAuth, asyncHandler(async (req, res) => {
@@ -669,7 +644,7 @@ postsRouter.delete("/:postId", requireAuth, asyncHandler(async (req, res) => {
         res.status(404).json({ error: "Not found" });
         return;
     }
-    await unlinkUploadsFile(owned.imageUrl);
+    await deleteStoredPostImage(owned.imageUrl);
     await prisma.post.delete({ where: { id: postId } });
     res.json({ ok: true });
 }));
