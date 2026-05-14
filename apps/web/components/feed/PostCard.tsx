@@ -230,6 +230,7 @@ function CommentRow({
   const [replyOpen, setReplyOpen] = useState(false);
   const [replyBody, setReplyBody] = useState("");
   const [busy, setBusy] = useState(false);
+  const { showComingSoon } = useComingSoon();
 
   useEffect(() => {
     setNode(c);
@@ -518,7 +519,7 @@ export function PostCard({
   const menuRef = useRef<HTMLDivElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
   const { showComingSoon } = useComingSoon();
-  const reactionPickerHoverCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reactionPickerHoverCloseTimerRef = useRef<number | null>(null);
 
   const clearReactionPickerHoverTimer = useCallback(() => {
     if (reactionPickerHoverCloseTimerRef.current) {
