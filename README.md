@@ -28,7 +28,9 @@ The **database URL is only in the API** (`apps/api/.env`), not in the web app.
 | File | Purpose |
 |------|---------|
 | **`apps/api/.env`** | **`DATABASE_URL`** (Prisma), `AUTH_SECRET`, `API_PORT`, `WEB_ORIGIN` |
-| **`apps/web/.env`** | `AUTH_SECRET` (must match API), `API_INTERNAL_URL` (default `http://127.0.0.1:3001`) |
+| **`apps/web/.env`** | `AUTH_SECRET` (must match API), `API_INTERNAL_URL` (default `http://127.0.0.1:3001`; production example: `https://buddy-script-a-social-platform-production.up.railway.app`) |
+
+**Production web → API:** set **`API_INTERNAL_URL`** on the Next.js service to your **public API base URL** (no path suffix). The app proxies `/api/*` server-side and rewrites `/uploads/*` to that host. Set this **before `next build`** on Railway (or any host) so `next.config` picks it up. Ensure **`WEB_ORIGIN`** on the API matches the browser origin of your Next app (session cookies + CORS).
 
 **Example (Docker Compose in this repo):** `postgresql://postgres:postgres@localhost:5433/social_app?schema=public`
 
