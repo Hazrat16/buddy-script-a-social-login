@@ -23,6 +23,9 @@ export function useBuddyAuthAssets(enabled: boolean) {
         ensureLink(`${PREFIX}-common`, "/assets/css/common.css", "stylesheet");
         ensureLink(`${PREFIX}-main`, "/assets/css/main.css", "stylesheet");
         ensureLink(`${PREFIX}-responsive`, "/assets/css/responsive.css", "stylesheet");
+        ensureLink(`${PREFIX}-auth-layout`, "/assets/css/buddy-auth-layout.css", "stylesheet");
+        document.documentElement.classList.add("buddy-auth-active");
+        document.body.classList.add("buddy-auth-active");
         const scriptId = `${PREFIX}-bootstrap-js`;
         let script = document.getElementById(scriptId) as HTMLScriptElement | null;
         if (!script) {
@@ -41,10 +44,13 @@ export function useBuddyAuthAssets(enabled: boolean) {
                 `${PREFIX}-common`,
                 `${PREFIX}-main`,
                 `${PREFIX}-responsive`,
+                `${PREFIX}-auth-layout`,
             ]) {
                 document.getElementById(id)?.remove();
             }
             document.getElementById(scriptId)?.remove();
+            document.documentElement.classList.remove("buddy-auth-active");
+            document.body.classList.remove("buddy-auth-active");
         };
     }, [enabled]);
 }

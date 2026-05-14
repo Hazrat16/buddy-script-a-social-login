@@ -1,74 +1,140 @@
-# Social app (monorepo)
+# Social app
 
-Next.js frontend (`apps/web`) and Express + Prisma API (`apps/api`). Run **both** with one command from the repository root.
+Monorepo with a **Next.js** app (`apps/web`) and an **Express + Prisma** API (`apps/api`). One command runs both locally.
 
-## Quick start
+---
 
-PostgreSQL is required. Easiest local option:
+## Prerequisites
+
+- **Node.js** 20+ and **npm**
+- **PostgreSQL** — easiest path is **Docker** (see below). You can use an existing Postgres on your machine instead.
+
+---
+
+## Run locally (step by step)
+
+### 1. Clone and install dependencies
 
 ```bash
-cd /path/to/social-app
-npm run docker:up
+git clone <repository-url> social-app
+cd social-app
 npm install
+```
+
+### 2. Environment files
+
+Create two env files from the examples (or copy and edit):
+
+```bash
+cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env
+```
+
+The root **`.env.example`** only references those two paths; you still copy each file into `apps/api/.env` and `apps/web/.env` as above.
+
+**`apps/api/.env`**
+
+| Variable | Local value |
+|----------|-------------|
+| `DATABASE_URL` | Use the URL below if you use Docker Postgres on **5433** |
+| `AUTH_SECRET` | Any random string **≥ 32 characters** (JWT signing) |
+| `WEB_ORIGIN` | `http://localhost:3000` |
+| `API_PORT` | `3001` (default) |
+| `API_PUBLIC_URL` | `http://127.0.0.1:3001` — optional; helps absolute image URLs for `/uploads` |
+
+With **Docker Compose** from this repo:
+
+```env
+DATABASE_URL="postgresql://postgres:postgres@localhost:5433/social_app?schema=public"
+```
+
+**`apps/web/.env`**
+
+| Variable | Rule |
+|----------|------|
+| `AUTH_SECRET` | **Must match** `AUTH_SECRET` in `apps/api/.env` |
+| `NEXT_API_BASE_URL` or `BACKEND_API_URL` | `http://127.0.0.1:3001` — the Express API base URL (not the Next URL) |
+| `NEXT_PUBLIC_UPLOADS_ORIGIN` | Same as API base for local images: `http://127.0.0.1:3001` (optional but useful) |
+
+### 3. Start Postgres (Docker)
+
+From the **repository root**:
+
+```bash
+npm run docker:up
+```
+
+This starts PostgreSQL with host port **5433** (so it does not conflict with Postgres already using **5432**).
+
+- Stop later: `npm run docker:down`
+- If you use your own Postgres on 5432, set `DATABASE_URL` accordingly and **skip** `docker:up`.
+
+### 4. Create database tables
+
+```bash
 npm run db:push
+```
+
+Applies the Prisma schema to the database (`apps/api`).
+
+### 5. Start the app
+
+```bash
 npm run dev
 ```
 
-`DATABASE_URL` in `apps/api/.env` must point at your Postgres instance (see `apps/api/.env.example`). Compose maps the DB to **localhost:5433** so it does not clash with an existing Postgres on **5432**.
+This starts the **API on port 3001**, waits until it responds, then starts **Next.js on port 3000**.
 
-If you already run Postgres on 5432 and want to use that instead of Docker, set `DATABASE_URL` to that server and skip `docker compose`.
+| Service | URL |
+|---------|-----|
+| Web (Next.js) | [http://localhost:3000](http://localhost:3000) |
+| API (Express) | [http://127.0.0.1:3001](http://127.0.0.1:3001) |
 
-- **Web**: [http://localhost:3000](http://localhost:3000)  
-- **API**: [http://127.0.0.1:3001](http://127.0.0.1:3001) (used internally; the browser talks to `/api` and `/uploads` on port 3000 via Next.js route handlers that proxy to the API)
+In the browser you only use **localhost:3000**. The UI calls `/api/...` and `/uploads/...` on that origin; Next.js **proxies** those to the API.
 
-## Environment
+Open **Register** or **Login**, then use the feed.
 
-The **database URL is only in the API** (`apps/api/.env`), not in the web app.
+---
 
-| File | Purpose |
-|------|---------|
-| **`apps/api/.env`** | **`DATABASE_URL`** (Prisma), `AUTH_SECRET`, `API_PORT`, `WEB_ORIGIN` |
-| **`apps/web/.env`** | `AUTH_SECRET` (must match API), **`BACKEND_API_URL`** or **`NEXT_API_BASE_URL`** (Express / Railway origin only — **not** your Vercel site URL; legacy `API_INTERNAL_URL` still works) |
+## Optional: Cloudinary (hosted images)
 
-**Production web → API:** set **`BACKEND_API_URL`** (preferred) or **`NEXT_API_BASE_URL`** on the Next.js service to your **Express** base URL (e.g. Railway), **not** the Vercel frontend URL. The app proxies **`/api/*`** and **`/uploads/*`** from Next to that host. Set this **before `next build`** on Vercel (enable for **Build** + **Production**). Ensure **`WEB_ORIGIN`** on the API matches the browser origin of your Next app (CORS). The **browser** still calls **`https://<your-next-host>/api/...`** so session cookies stay on the Next origin; see `apps/web/README.md` (“Vercel + Railway”).
+By default, images are stored under **`apps/api/uploads`** and served from `/uploads`. For production-style hosting, configure **Cloudinary** on the API (see `apps/api/README.md`).
 
-**Example (Docker Compose in this repo):** `postgresql://postgres:postgres@localhost:5433/social_app?schema=public`
+Use the **`CLOUDINARY_URL`** from the Cloudinary dashboard; it must start with **`cloudinary://`**. Alternatively set `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET`.
 
-**Example (Postgres already on your machine, default port):** `postgresql://USER:PASSWORD@localhost:5432/DBNAME?schema=public`
+---
 
-**Production (Neon):** set `DATABASE_URL` on the **API** service to your Neon connection string (pooled host recommended). Include `sslmode=require`; Neon may also suggest `channel_binding=require`. Run `npm run db:push -w api` once against that database so tables exist. Do not commit credentials—use your host’s secret / environment UI only.
+## Useful scripts (repository root)
 
-Templates: `apps/api/.env.example`, `apps/web/.env.example`, root `.env.example`.
+| Command | What it does |
+|---------|----------------|
+| `npm run dev` | API + Next in development |
+| `npm run build` | Production build (API then web) |
+| `npm run start` | Run built API + web |
+| `npm run db:push` | Sync Prisma schema to the database |
+| `npm run db:studio` | Open Prisma Studio for the API database |
+| `npm run docker:up` / `docker:down` | Start / stop Docker Postgres |
 
-## Scripts (root)
+---
 
-| Script        | Description                                      |
-|---------------|--------------------------------------------------|
-| `npm run dev` | Starts API, waits for port **3001**, then starts Next (avoids proxy errors) |
-| `npm run build` | Builds API (`tsc`) then Next (`next build`)  |
-| `npm run start` | Runs production API + Next (after build)     |
-| `npm run db:push` | Applies Prisma schema to Postgres (`apps/api`) |
-| `npm run docker:up` | Starts Postgres in Docker (port **5433** on host) |
-| `npm run docker:down` | Stops Postgres container |
-
-## Layout
+## Project layout
 
 ```
 apps/
-  api/          Express, Prisma, JWT cookies, uploads/
-  web/          Next.js UI only (proxies /api and `/uploads` to API)
+  api/     Express REST, Prisma, JWT cookies, file uploads
+  web/     Next.js UI; proxies /api and /uploads to the API
 ```
+
+More detail for the web app and production (Vercel + Railway): **`apps/web/README.md`**. API uploads and Cloudinary: **`apps/api/README.md`**.
+
+---
 
 ## Troubleshooting
 
-`npm run dev` starts the **API first**, runs a small **Node wait script** until port **3001** accepts connections, then starts Next — so `/api` and `/uploads` proxies do not hit a dead server.
+**503 / database tables missing** — Run `npm run db:push` after Postgres is up.
 
-If login or register returns **503** with a message about **database tables**, Postgres is reachable but the schema was never applied — run **`npm run db:push`** from the repo root (after `docker:up` if you use Docker).
+**ECONNREFUSED on 3001** — API failed to start. Check `apps/api/.env`: `DATABASE_URL`, Postgres running, and `AUTH_SECRET` length (≥ 32). Run `npm run dev -w api` alone to see the error.
 
-If you still see **ECONNREFUSED** on `3001`, the API process exited (check the `[api]` lines): common causes are missing **`apps/api/.env`**, invalid **`DATABASE_URL`** (Postgres not running / wrong port), or **`AUTH_SECRET`** shorter than 32 characters. Run `npm run dev -w api` alone to see the stack trace.
+**Images 404 locally** — Ensure `NEXT_PUBLIC_UPLOADS_ORIGIN` matches the API (`http://127.0.0.1:3001`) or use Cloudinary.
 
-### Source maps (404)
-
-Bootstrap `.map` files are not shipped under `public/assets`; those 404s are harmless unless you need browser debugging of minified vendor JS.
-
-More detail: `apps/web/README.md`.
+**Bootstrap `.map` 404 in DevTools** — Vendor source maps are not shipped; safe to ignore for local dev.

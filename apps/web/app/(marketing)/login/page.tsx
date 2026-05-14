@@ -38,7 +38,7 @@ export default function LoginPage() {
             setLoading(false);
         }
     }
-    return (<section className="_social_login_wrapper _layout_main_wrapper">
+    return (<section className="_social_login_wrapper _layout_main_wrapper buddy-auth-screen">
       <BuddyAuthShapes />
       <div className="_social_login_wrap">
         <div className="container">

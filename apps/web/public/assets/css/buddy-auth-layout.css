@@ -1,0 +1,241 @@
+html.buddy-auth-active {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
+html.buddy-auth-active body {
+    margin: 0;
+    min-height: 100vh !important;
+    max-height: 100vh !important;
+    height: 100vh !important;
+    overflow: hidden !important;
+    overscroll-behavior: none;
+}
+
+@supports (height: 100dvh) {
+    html.buddy-auth-active body {
+        min-height: 100dvh !important;
+        max-height: 100dvh !important;
+        height: 100dvh !important;
+    }
+}
+
+section.buddy-auth-screen {
+    position: relative;
+    box-sizing: border-box;
+    min-height: 100vh;
+    max-height: 100vh;
+    height: 100vh;
+    padding: 0 !important;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+@supports (height: 100dvh) {
+    section.buddy-auth-screen {
+        min-height: 100dvh;
+        max-height: 100dvh;
+        height: 100dvh;
+    }
+}
+
+section.buddy-auth-screen ._social_login_wrap,
+section.buddy-auth-screen ._social_registration_wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 0;
+    overflow: hidden;
+}
+
+section.buddy-auth-screen ._social_login_wrap .container,
+section.buddy-auth-screen ._social_registration_wrap .container {
+    max-height: 100%;
+    overflow: hidden;
+}
+
+section.buddy-auth-screen ._social_login_wrap .row.align-items-center,
+section.buddy-auth-screen ._social_registration_wrap .row.align-items-center {
+    max-height: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    align-items: center !important;
+    flex-wrap: nowrap;
+}
+
+section.buddy-auth-screen ._social_login_wrap .row.align-items-center > [class*="col-"],
+section.buddy-auth-screen ._social_registration_wrap .row.align-items-center > [class*="col-"] {
+    max-height: 100%;
+    min-height: 0;
+}
+
+section.buddy-auth-screen ._social_login_left,
+section.buddy-auth-screen ._social_registration_right {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+    overflow: hidden;
+}
+
+section.buddy-auth-screen ._social_login_left_image {
+    max-height: min(96dvh, 96vh);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+section.buddy-auth-screen ._social_registration_right {
+    max-height: min(96dvh, 96vh);
+}
+
+section.buddy-auth-screen ._left_img {
+    max-height: min(92dvh, 92vh);
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+section.buddy-auth-screen ._social_registration_right_image img {
+    max-height: min(92dvh, 92vh);
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+section.buddy-auth-screen ._social_login_content,
+section.buddy-auth-screen ._social_registration_content {
+    padding: 20px 22px 16px;
+    box-sizing: border-box;
+    max-height: min(96dvh, 96vh);
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+section.buddy-auth-screen ._mar_b28 {
+    margin-bottom: 10px !important;
+}
+
+section.buddy-auth-screen ._mar_b8 {
+    margin-bottom: 4px !important;
+}
+
+section.buddy-auth-screen ._mar_b50 {
+    margin-bottom: 14px !important;
+}
+
+section.buddy-auth-screen ._mar_b40 {
+    margin-bottom: 10px !important;
+}
+
+section.buddy-auth-screen ._mar_b14 {
+    margin-bottom: 6px !important;
+}
+
+section.buddy-auth-screen ._mar_t40 {
+    margin-top: 10px !important;
+}
+
+section.buddy-auth-screen ._mar_b60 {
+    margin-bottom: 8px !important;
+}
+
+section.buddy-auth-screen ._social_login_content_title,
+section.buddy-auth-screen ._social_registration_content_title {
+    font-size: 22px;
+    line-height: 1.2;
+}
+
+section.buddy-auth-screen ._left_logo,
+section.buddy-auth-screen ._right_logo {
+    max-width: 132px;
+}
+
+section.buddy-auth-screen ._social_login_content_btn,
+section.buddy-auth-screen ._social_registration_content_btn {
+    padding: 8px 20px;
+    display: flex;
+    width: fit-content;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    box-sizing: border-box;
+}
+
+section.buddy-auth-screen ._social_login_input,
+section.buddy-auth-screen ._social_registration_input {
+    height: 42px;
+}
+
+section.buddy-auth-screen ._social_login_form_btn,
+section.buddy-auth-screen ._social_registration_form_btn {
+    margin-top: 8px !important;
+    margin-bottom: 6px !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+section.buddy-auth-screen ._social_login_form_btn_link._btn1,
+section.buddy-auth-screen ._social_registration_form_btn_link._btn1 {
+    width: fit-content;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+section.buddy-auth-screen ._social_login_bottom_txt_para,
+section.buddy-auth-screen ._social_registration_bottom_txt_para {
+    margin-bottom: 0;
+}
+
+@media (max-width: 991px) {
+    section.buddy-auth-screen ._social_login_wrap .row.align-items-center,
+    section.buddy-auth-screen ._social_registration_wrap .row.align-items-center {
+        flex-wrap: wrap;
+    }
+
+    section.buddy-auth-screen ._social_login_left,
+    section.buddy-auth-screen ._social_registration_right {
+        display: none !important;
+    }
+
+    section.buddy-auth-screen .col-xl-8.col-lg-8 {
+        display: none !important;
+    }
+
+    section.buddy-auth-screen .col-xl-4.col-lg-4 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    section.buddy-auth-screen ._social_login_content,
+    section.buddy-auth-screen ._social_registration_content {
+        margin-top: 0 !important;
+        max-width: 420px;
+        margin-left: auto;
+        margin-right: auto;
+        max-height: min(100dvh - 16px, 100vh - 16px);
+    }
+}
+
+@media (max-height: 720px) {
+    section.buddy-auth-screen ._social_login_content_title,
+    section.buddy-auth-screen ._social_registration_content_title {
+        font-size: 20px;
+    }
+
+    section.buddy-auth-screen ._social_login_input,
+    section.buddy-auth-screen ._social_registration_input {
+        height: 40px;
+    }
+
+    section.buddy-auth-screen ._social_login_content,
+    section.buddy-auth-screen ._social_registration_content {
+        padding: 14px 18px 12px;
+    }
+}

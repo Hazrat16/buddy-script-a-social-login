@@ -50,7 +50,7 @@ export default function RegisterPage() {
             setLoading(false);
         }
     }
-    return (<section className="_social_registration_wrapper _layout_main_wrapper">
+    return (<section className="_social_registration_wrapper _layout_main_wrapper buddy-auth-screen">
       <BuddyAuthShapes />
       <div className="_social_registration_wrap">
         <div className="container">
