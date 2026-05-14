@@ -86,6 +86,8 @@ export async function proxyApiRequest(request: NextRequest): Promise<Response> {
 
     try {
       outHeaders.set("x-upstream-host", new URL(backend).hostname);
+      /** Full origin Next used for upstream fetch — use `curl -i` to confirm prod vs local API. */
+      outHeaders.set("x-upstream-base", backend);
     } catch {
       /* ignore */
     }

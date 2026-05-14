@@ -7,6 +7,14 @@ Frontend only. All REST endpoints live in **`apps/api`** (Express). The browser 
 From repo root: `npm run dev`  
 Or from this folder: `npm run dev` (ensure API is already running on port 3001, or set `NEXT_API_BASE_URL`).
 
+### Local Next UI + production API (Railway)
+
+Put **`NEXT_API_BASE_URL=https://…railway.app`** in `apps/web/.env` and restart `next dev`. The **browser will still call** `http://localhost:3000/api/...` — that is your Next server. Next then **proxies** those requests to Railway. Check the terminal on startup for `[buddy web] /api/* is proxied to: …`, or DevTools → Network → any `/api/*` response → **`x-upstream-host`** should be your Railway hostname.
+
+**`AUTH_SECRET`** in `apps/web/.env` must match the value on the **production API** (Railway), or `middleware.ts` cannot verify the session JWT and protected routes will bounce you to `/login`.
+
+Opening **`https://…railway.app/`** in a tab only checks that the API host answers; it does not control where the app sends `/api` traffic. After deploy, the API root returns JSON (not an HTML “landing page”).
+
 ## Build
 
 From root: `npm run build`  

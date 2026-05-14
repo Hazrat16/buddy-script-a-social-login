@@ -16,6 +16,15 @@ app.set("trust proxy", 1);
 const PORT = Number(process.env.API_PORT) || 3001;
 const WEB_ORIGIN = process.env.WEB_ORIGIN || "http://localhost:3000";
 
+/** Browsers hitting the bare Railway host see this instead of "Cannot GET /". */
+app.get("/", (_req, res) => {
+  res.status(200).json({
+    ok: true,
+    service: "buddy-api",
+    message: "Use /health or /api/health. REST lives under /api/*.",
+  });
+});
+
 app.get("/health", (_req, res) => {
   res.status(200).json({ ok: true, service: "buddy-api" });
 });
