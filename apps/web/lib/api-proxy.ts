@@ -61,6 +61,13 @@ export async function proxyApiRequest(request: NextRequest): Promise<Response> {
       if (!hopByHop.has(key.toLowerCase())) outHeaders.set(key, value);
     });
 
+    try {
+      outHeaders.set("x-upstream-host", new URL(backend).hostname);
+    } catch {
+      /* ignore */
+    }
+    outHeaders.set("x-proxied-by", "nextjs");
+
     return new Response(res.body, {
       status: res.status,
       statusText: res.statusText,
@@ -73,6 +80,13 @@ export async function proxyApiRequest(request: NextRequest): Promise<Response> {
     return NextResponse.json(
       {
         error: "Cannot reach API backend",
+        upstreamHost: (() => {
+          try {
+            return new URL(backend).hostname;
+          } catch {
+            return "invalid-API_INTERNAL_URL";
+          }
+        })(),
         hint: missingUpstream
           ? "On Vercel, set API_INTERNAL_URL to your Railway API URL and enable it for **Build** and **Production**, then redeploy. (Otherwise the proxy may fall back to localhost.)"
           : `Check that the API is running and API_INTERNAL_URL matches it (currently targeting ${backend}).`,

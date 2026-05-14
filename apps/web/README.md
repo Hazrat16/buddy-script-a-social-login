@@ -24,4 +24,6 @@ That is **intentional**. Your **httpOnly** session cookie must be issued in a re
 
 So: **Network tab → URL = Vercel** for `/api/*`, while the **Vercel server** forwards the request to **`API_INTERNAL_URL`** (Railway). Set `API_INTERNAL_URL` on Vercel (including for **Build**) and redeploy; do **not** try to point the browser at Railway for auth unless you redesign auth (e.g. tokens + no httpOnly cookie on Vercel).
 
+To **confirm** the proxy target, open DevTools → **Network** → pick any `/api/...` response → **Response headers** should include `x-upstream-host: …railway.app` and `x-proxied-by: nextjs` when the upstream fetch succeeded.
+
 See the [root README](../../README.md) for the monorepo overview.
