@@ -1,16 +1,15 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+import { isThisVercelAppHost, readApiBackendBaseFromEnv } from "@/lib/api-backend-env";
+
 /**
- * Resolve at **request time** (not module load). Prefer `NEXT_API_BASE_URL`; `API_INTERNAL_URL` is still read as a legacy fallback.
- * On Vercel, a base URL is **required** — never default to localhost (that would hide a missing env and bypass Railway).
+ * Resolve at **request time** (not module load). See `lib/api-backend-env.ts` for env names.
+ * On Vercel, a base URL is **required** — never default to localhost (that would hide a missing env).
  */
 function getBackendBase(): string | null {
-  const raw =
-    process.env["NEXT_API_BASE_URL"]?.trim() || process.env["API_INTERNAL_URL"]?.trim();
-  if (typeof raw === "string" && raw.trim()) {
-    return raw.trim().replace(/\/$/, "");
-  }
+  const fromEnv = readApiBackendBaseFromEnv();
+  if (fromEnv) return fromEnv;
   if (process.env.VERCEL) {
     return null;
   }
@@ -39,7 +38,7 @@ function forwardHeaders(request: NextRequest): Headers {
 }
 
 /**
- * Forwards the incoming `/api/...` request to the Express app (`NEXT_API_BASE_URL`).
+ * Forwards the incoming `/api/...` request to the Express app (`BACKEND_API_URL` / `NEXT_API_BASE_URL`).
  * This replaces `next.config` rewrites so routing is explicit and always hits your API code.
  */
 export async function proxyApiRequest(request: NextRequest): Promise<Response> {
@@ -49,7 +48,18 @@ export async function proxyApiRequest(request: NextRequest): Promise<Response> {
       {
         error: "API base URL is not configured",
         hint:
-          "On Vercel, set NEXT_API_BASE_URL to your API origin (e.g. https://…railway.app) for **Production**, **Preview**, and **Build**, then redeploy.",
+          "On Vercel, set BACKEND_API_URL (recommended) or NEXT_API_BASE_URL to your **Express** origin (e.g. https://….up.railway.app), **not** your Vercel site URL. Enable for Production, Preview, and Build, then redeploy.",
+      },
+      { status: 503 },
+    );
+  }
+  if (isThisVercelAppHost(backend)) {
+    return NextResponse.json(
+      {
+        error: "API base URL points at this Next app on Vercel",
+        hint:
+          "You set BACKEND_API_URL / NEXT_API_BASE_URL to the same host as the frontend (vercel.app). That proxies /api to itself. Set it to your separate API server only (Railway URL).",
+        vercelUrl: process.env.VERCEL_URL ?? null,
       },
       { status: 503 },
     );
@@ -107,10 +117,10 @@ export async function proxyApiRequest(request: NextRequest): Promise<Response> {
           try {
             return new URL(backend).hostname;
           } catch {
-            return "invalid-NEXT_API_BASE_URL";
+            return "invalid-backend-url";
           }
         })(),
-        hint: `Check that the API is running and NEXT_API_BASE_URL matches it (currently targeting ${backend}).`,
+        hint: `Check that the API is running and BACKEND_API_URL / NEXT_API_BASE_URL matches it (currently targeting ${backend}).`,
         detail: msg,
       },
       { status: 502 },
