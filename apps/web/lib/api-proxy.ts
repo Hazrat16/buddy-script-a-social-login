@@ -1,5 +1,4 @@
 import type { NextRequest } from "next/server";
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { isThisVercelAppHost, isVercelProductionDeploy, readApiBackendBaseFromEnv } from "@/lib/api-backend-env";
@@ -89,32 +88,37 @@ function parseFirstCookiePair(line: string): { name: string; value: string } | n
 }
 
 /**
- * Re-apply upstream `Set-Cookie` on the Next response. Forwarding only via `Headers.append("Set-Cookie")`
- * on a raw `Response` is unreliable in some production setups; `cookies().set()` is the supported App Router path.
+ * Attach upstream `Set-Cookie` to the proxied response.
+ *
+ * Use `NextResponse.cookies` (ResponseCookies → real `Set-Cookie` headers) for `buddy_session`. The global
+ * `cookies().set()` + `appendMutableCookies()` merge can let **response header** cookies overwrite mutated
+ * cookies in some cases; `NextResponse.cookies.set` writes through `headers.append("set-cookie", …)` directly.
  */
-async function forwardUpstreamSetCookieHeaders(upstream: Response, outHeaders: Headers): Promise<void> {
+function attachUpstreamCookies(upstream: Response, outHeaders: Headers): NextResponse {
   const lines = getUpstreamSetCookieLines(upstream);
-  if (lines.length === 0) return;
-
-  let jar: Awaited<ReturnType<typeof cookies>> | null = null;
-  try {
-    jar = await cookies();
-  } catch {
-    jar = null;
+  for (const line of lines) {
+    const pair = parseFirstCookiePair(line);
+    if (pair?.name === SESSION_COOKIE) continue;
+    outHeaders.append("Set-Cookie", line);
   }
+
+  const nextRes = new NextResponse(upstream.body, {
+    status: upstream.status,
+    statusText: upstream.statusText,
+    headers: outHeaders,
+  });
 
   for (const line of lines) {
     const pair = parseFirstCookiePair(line);
-    if (jar && pair?.name === SESSION_COOKIE) {
-      if (!pair.value) {
-        jar.delete(SESSION_COOKIE);
-      } else {
-        jar.set(SESSION_COOKIE, pair.value, sessionCookieOptions);
-      }
-      continue;
+    if (pair?.name !== SESSION_COOKIE) continue;
+    if (!pair.value) {
+      nextRes.cookies.delete(SESSION_COOKIE);
+    } else {
+      nextRes.cookies.set(SESSION_COOKIE, pair.value, sessionCookieOptions);
     }
-    outHeaders.append("Set-Cookie", line);
   }
+
+  return nextRes;
 }
 
 /**
@@ -181,8 +185,6 @@ export async function proxyApiRequest(request: NextRequest): Promise<Response> {
       if (k === "set-cookie") return;
       outHeaders.set(key, value);
     });
-    await forwardUpstreamSetCookieHeaders(res, outHeaders);
-
     try {
       outHeaders.set("x-upstream-host", new URL(backend).hostname);
       /** Full origin Next used for upstream fetch — use `curl -i` to confirm prod vs local API. */
@@ -192,11 +194,7 @@ export async function proxyApiRequest(request: NextRequest): Promise<Response> {
     }
     outHeaders.set("x-proxied-by", "nextjs");
 
-    return new NextResponse(res.body, {
-      status: res.status,
-      statusText: res.statusText,
-      headers: outHeaders,
-    });
+    return attachUpstreamCookies(res, outHeaders);
   } catch (err) {
     const detail = describeFetchFailure(err);
     const isTimeout =

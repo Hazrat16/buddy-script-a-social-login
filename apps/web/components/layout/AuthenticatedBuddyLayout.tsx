@@ -30,21 +30,32 @@ export function AuthenticatedBuddyLayout({ children }: { children: React.ReactNo
     (async () => {
       const load = async () => {
         const u = await fetch("/api/auth/me", fetchOpts);
-        return { u, ud: (await u.json()) as { user?: PublicUser } };
+        let ud: { user?: PublicUser } = {};
+        try {
+          ud = (await u.json()) as { user?: PublicUser };
+        } catch {
+          /* empty body or HTML error page from proxy */
+        }
+        return { u, ud };
       };
-      let { u, ud } = await load();
-      if (cancelled) return;
-      if ((!u.ok || !ud.user) && u.status === 401) {
-        await new Promise((r) => setTimeout(r, 200));
+
+      /** Retry `/api/auth/me` — cold Railway, proxy blips, or cookie timing after login. */
+      const waitBeforeAttemptMs = [0, 120, 250, 500, 1000, 2000];
+      for (let i = 0; i < waitBeforeAttemptMs.length; i++) {
+        const delay = waitBeforeAttemptMs[i]!;
+        if (delay > 0) {
+          await new Promise((r) => setTimeout(r, delay));
+        }
         if (cancelled) return;
-        ({ u, ud } = await load());
+        const { u, ud } = await load();
+        if (cancelled) return;
+        if (u.ok && ud.user) {
+          setMe(ud.user as PublicUser);
+          return;
+        }
       }
       if (cancelled) return;
-      if (!u.ok || !ud.user) {
-        router.replace("/login");
-        return;
-      }
-      setMe(ud.user as PublicUser);
+      router.replace("/login");
     })();
     return () => {
       cancelled = true;
