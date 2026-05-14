@@ -56,13 +56,13 @@ export function PostComposer({
           localStorage.removeItem(DRAFT_KEY);
           return;
         }
-        localStorage.setItem(DRAFT_KEY, JSON.stringify({ body, visibility }));
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({ body, visibility: "PUBLIC" }));
       } catch {
         /* quota */
       }
     }, 450);
     return () => window.clearTimeout(t);
-  }, [body, visibility, file]);
+  }, [body, file, visibility]);
 
   const submit = useCallback(async () => {
     setErr(null);
@@ -79,7 +79,7 @@ export function PostComposer({
     try {
       const fd = new FormData();
       fd.set("body", trimmed);
-      fd.set("visibility", visibility);
+      fd.set("visibility", "PUBLIC");
       if (file) fd.set("image", file);
       const res = await fetch("/api/posts", { method: "POST", body: fd, credentials: "include" });
       const data = await res.json().catch(() => ({}));
@@ -99,7 +99,7 @@ export function PostComposer({
     } finally {
       setLoading(false);
     }
-  }, [body, visibility, file, onPosted]);
+  }, [body, file, onPosted]);
 
   const len = body.length;
   const nearLimit = len > MAX_BODY - 200;
@@ -185,30 +185,6 @@ export function PostComposer({
     </div>
   );
 
-  const renderBuddyMetaRow = (visibilityFieldId: string) => (
-    <div className="_buddy_composer_meta_row">
-      <div className="_buddy_composer_meta_left">
-        <span className="_nitification_time" style={{ margin: 0, fontSize: 12 }}>
-          {len.toLocaleString()} / {MAX_BODY.toLocaleString()}
-        </span>
-        <label htmlFor={visibilityFieldId} className="_nitification_time" style={{ margin: 0, fontSize: 12 }}>
-          Audience
-        </label>
-        <select
-          id={visibilityFieldId}
-          className="form-control _inpt1"
-          style={{ width: "auto", minWidth: 118, height: 38, fontSize: 14, padding: "4px 10px" }}
-          value={visibility}
-          onChange={(e) => setVisibility(e.target.value as "PUBLIC" | "PRIVATE")}
-        >
-          <option value="PUBLIC">Public</option>
-          <option value="PRIVATE">Only me</option>
-        </select>
-      </div>
-      {buddyPostBtn}
-    </div>
-  );
-
   if (buddySkin) {
     return (
       <div className="_feed_inner_text_area _b_radious6 _padd_b24 _padd_t24 _padd_r24 _padd_l24 _mar_b16">
@@ -217,17 +193,18 @@ export function PostComposer({
             Restored a saved draft from this browser.
           </p>
         ) : null}
-        <div className="_feed_inner_text_area_box">
-          <div className="_feed_inner_text_area_box_image" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div className="_feed_inner_text_area_box" style={{ alignItems: "flex-start" }}>
+          <div className="_feed_inner_text_area_box_image" style={{ display: "flex", alignItems: "center", justifyContent: "center", marginTop: 2 }}>
             <UserAvatar user={me} size={48} shape="rounded-full" />
           </div>
-          <div className="form-floating _feed_inner_text_area_box_form">
+          <div className="_feed_inner_text_area_box_form" style={{ width: "100%" }}>
             <textarea
               className="form-control _textarea"
               placeholder="Write something ..."
               id="buddy-composer-textarea"
               value={body}
               maxLength={MAX_BODY}
+              style={{ minHeight: 72, paddingTop: 10 }}
               onChange={(e) => setBody(e.target.value)}
               onKeyDown={(e) => {
                 if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
@@ -236,26 +213,11 @@ export function PostComposer({
                 }
               }}
             />
-            <label className="_feed_textarea_label" htmlFor="buddy-composer-textarea">
-              Write something ...
-              <svg xmlns="http://www.w3.org/2000/svg" width="23" height="24" fill="none" viewBox="0 0 23 24">
-                <path
-                  fill="#666"
-                  d="M19.504 19.209c.332 0 .601.289.601.646 0 .326-.226.596-.52.64l-.081.005h-6.276c-.332 0-.602-.289-.602-.645 0-.327.227-.597.52-.64l.082-.006h6.276zM13.4 4.417c1.139-1.223 2.986-1.223 4.125 0l1.182 1.268c1.14 1.223 1.14 3.205 0 4.427L9.82 19.649a2.619 2.619 0 01-1.916.85h-3.64c-.337 0-.61-.298-.6-.66l.09-3.941a3.019 3.019 0 01.794-1.982l8.852-9.5z"
-                />
-              </svg>
-            </label>
           </div>
         </div>
-        <div className="_feed_inner_text_area_bottom">
+        <div className="_feed_inner_text_area_bottom" style={{ marginTop: 12, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           {buddyMediaRow}
-          {renderBuddyMetaRow("buddy-composer-vis-d")}
-        </div>
-        <div className="_feed_inner_text_area_bottom_mobile">
-          <div className="_feed_inner_text_mobile">
-            {buddyMediaRow}
-            {renderBuddyMetaRow("buddy-composer-vis-m")}
-          </div>
+          {buddyPostBtn}
         </div>
         <input
           ref={inputRef}
@@ -277,13 +239,11 @@ export function PostComposer({
             {err}
           </p>
         ) : null}
-        <p
-          className="_nitification_time _buddy_composer_footer"
-          style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}
-        >
-          <span>Posting as {displayName(me)}</span>
-          {nearLimit ? <span style={{ color: "#b45309", fontWeight: 600 }}>Near character limit</span> : null}
-        </p>
+        {nearLimit ? (
+          <p className="_nitification_time _buddy_composer_footer" style={{ marginTop: 8, color: "#b45309", fontWeight: 600 }}>
+            Near character limit
+          </p>
+        ) : null}
       </div>
     );
   }

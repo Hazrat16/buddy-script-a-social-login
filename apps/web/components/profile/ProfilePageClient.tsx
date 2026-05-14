@@ -102,12 +102,12 @@ export function ProfilePageClient() {
         <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900 dark:shadow-card-dark">
           <div className="h-32 bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-800 sm:h-40" />
           <div className="relative px-5 pb-8 pt-0 sm:px-8">
-            <div className="relative -mt-12 flex flex-col items-center sm:-mt-14 sm:flex-row sm:items-end sm:gap-6">
+            <div className="relative -mt-12 flex flex-col items-start sm:-mt-14 sm:flex-row sm:items-end sm:gap-6">
               <UserAvatar user={me} size={96} shape="rounded-full" className="ring-4 ring-white shadow-lg dark:ring-slate-900" />
-              <div className="mt-4 text-center sm:mb-2 sm:mt-0 sm:flex-1 sm:text-left">
+              <div className="mt-4 text-left sm:mb-2 sm:mt-0 sm:flex-1">
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{displayName(me)}</h1>
                 {me.email ? <p className="mt-1 text-slate-600 dark:text-slate-400">{me.email}</p> : null}
-                <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
+                <div className="mt-3 flex flex-wrap justify-start gap-2">
                   {typeof me.postCount === "number" ? (
                     <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
                       {me.postCount} {me.postCount === 1 ? "post" : "posts"}
