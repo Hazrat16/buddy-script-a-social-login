@@ -14,15 +14,20 @@ export function ProfileMiniCard({ user }: { user: PublicUser }) {
           {user.email ? (
             <p className="truncate text-sm text-slate-600 dark:text-slate-400">{user.email}</p>
           ) : null}
-          <Link
-            href="/profile"
-            className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
-          >
-            View profile
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            <Link
+              href="/profile"
+              className="inline-flex items-center gap-1 text-sm font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+            >
+              View profile
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+            <Link href="/settings" className="text-sm font-semibold text-slate-600 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400">
+              Settings
+            </Link>
+          </div>
         </div>
       </div>
     </div>

@@ -1,0 +1,353 @@
+/* Buddy feed + Next.js / Tailwind integration fixes */
+
+/* Desktop navbar: keep collapse row visible (Bootstrap + layout) */
+@media (min-width: 992px) {
+  body.buddy-feed-active nav.navbar._header_nav.navbar-expand-lg .container._custom_container {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  body.buddy-feed-active nav.navbar._header_nav.navbar-expand-lg .navbar-collapse,
+  body.buddy-feed-active nav.navbar._header_nav.navbar-expand-lg .navbar-collapse.buddy-navbar-collapse {
+    display: flex !important;
+    flex-basis: auto !important;
+    flex-grow: 1;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-width: 0;
+    visibility: visible !important;
+    height: auto !important;
+    overflow: visible !important;
+    opacity: 1 !important;
+  }
+
+  body.buddy-feed-active .buddy-navbar-search {
+    flex: 1 1 auto;
+    min-width: 140px;
+    max-width: none;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  body.buddy-feed-active .buddy-navbar-search ._header_form_grp .form-control._inpt1 {
+    width: 100%;
+  }
+
+  body.buddy-feed-active .buddy-navbar-actions {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+
+  body.buddy-feed-active nav.navbar._header_nav.navbar-expand-lg .navbar-toggler {
+    display: none !important;
+  }
+}
+
+/* Story cards: label + corner mini avatar stacking (template expects <img> mini) */
+body.buddy-feed-active ._feed_inner_public_story_image {
+  min-height: 148px;
+}
+
+body.buddy-feed-active ._feed_inner_pulic_story_txt {
+  z-index: 2;
+  pointer-events: none;
+}
+
+body.buddy-feed-active ._feed_inner_public_mini {
+  z-index: 4;
+  top: 10px;
+  right: 10px;
+}
+
+body.buddy-feed-active ._feed_inner_public_mini img._public_mini_img {
+  width: 28px;
+  height: 28px;
+  max-width: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--bg2);
+  object-fit: cover;
+  display: block;
+}
+
+/* Composer: keep floating label from colliding with textarea */
+body.buddy-feed-active ._feed_inner_text_area_box_form textarea._textarea {
+  padding-top: 14px !important;
+}
+
+body.buddy-feed-active ._feed_inner_text_area_box_form label._feed_textarea_label {
+  pointer-events: none;
+}
+
+body.buddy-feed-active ._header_nav_list {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+body.buddy-feed-active span._header_nav_link._header_notify_btn {
+  position: relative;
+}
+
+body.buddy-feed-active ._header_nav_profile {
+  position: relative;
+}
+
+/* Navbar avatar: template `_header_nav_profile_image` is 24px — too small for initials avatar */
+body.buddy-feed-active ._header_nav_profile_image {
+  flex: 0 0 40px !important;
+  width: 40px !important;
+  max-width: none !important;
+  margin-right: 10px;
+}
+
+body.buddy-feed-active ._nav_profile_dropdown {
+  border-radius: 12px;
+  width: min(312px, calc(100vw - 24px));
+}
+
+body.buddy-feed-active ._nav_drop_info {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 2px;
+}
+
+body.buddy-feed-active button._nav_dropdown_link {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+body.buddy-feed-active ._layout_main_wrapper._dark_wrapper ._nav_drop_btn_link svg path {
+  fill: rgba(255, 255, 255, 0.45);
+}
+
+body.buddy-feed-active ._logo_wrap {
+  flex: 0 0 auto;
+}
+
+body.buddy-feed-active ._header_form {
+  flex: 1 1 auto;
+  max-width: none;
+  min-width: 0;
+}
+
+/* Story row: align card tops and equal column stretch */
+body.buddy-feed-active ._feed_inner_ppl_card > .row {
+  align-items: stretch;
+}
+
+body.buddy-feed-active ._feed_inner_ppl_card > .row > [class*="col-"] {
+  display: flex;
+}
+
+body.buddy-feed-active ._feed_inner_profile_story,
+body.buddy-feed-active ._feed_inner_public_story {
+  flex: 1 1 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+body.buddy-feed-active ._feed_inner_profile_story_image,
+body.buddy-feed-active ._feed_inner_public_story_image {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 168px;
+}
+
+body.buddy-feed-active ._feed_inner_public_story_image ._public_story_img {
+  flex: 1 1 auto;
+  object-fit: cover;
+  min-height: 120px;
+}
+
+/*
+ * Composer bottom: template uses fixed height: 64px on ._feed_inner_text_area_bottom
+ * and ._feed_inner_text_mobile — that clips/overlaps when we stack media + meta rows.
+ */
+body.buddy-feed-active ._feed_inner_text_area_bottom {
+  height: auto !important;
+  min-height: 0;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  padding: 0 !important;
+}
+
+body.buddy-feed-active ._feed_inner_text_area_bottom > ._feed_inner_text_area_item {
+  padding: 10px 15px;
+  width: 100%;
+  border-radius: 0;
+}
+
+body.buddy-feed-active ._feed_inner_text_mobile {
+  height: auto !important;
+  min-height: 0;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  padding: 0 !important;
+}
+
+body.buddy-feed-active ._feed_inner_text_mobile > ._feed_inner_text_area_item {
+  padding: 10px 15px;
+  width: 100%;
+  border-radius: 0;
+}
+
+/* Composer: second row — single tint lives on parent bar; no second blue layer */
+body.buddy-feed-active ._buddy_composer_meta_row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  width: 100%;
+  padding: 10px 15px 12px;
+  box-sizing: border-box;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  background: transparent;
+}
+
+body.buddy-feed-active ._layout_main_wrapper._dark_wrapper ._buddy_composer_meta_row {
+  border-top-color: rgba(255, 255, 255, 0.12);
+}
+
+body.buddy-feed-active ._buddy_composer_footer {
+  margin-top: 10px;
+  padding-top: 4px;
+  clear: both;
+}
+
+body.buddy-feed-active ._buddy_composer_meta_left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  min-width: 0;
+}
+
+body.buddy-feed-active ._buddy_composer_meta_left label {
+  margin: 0;
+  white-space: nowrap;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+body.buddy-feed-active ._buddy_composer_meta_left select.form-control {
+  min-width: 120px;
+  max-width: 200px;
+}
+
+body.buddy-feed-active ._buddy_composer_meta_row ._feed_inner_text_area_btn {
+  flex: 0 0 auto;
+  margin-left: auto;
+  width: auto !important;
+}
+
+body.buddy-feed-active ._buddy_composer_meta_row ._feed_inner_text_area_btn_link {
+  width: auto !important;
+}
+
+/* responsive.css (992–1199px) adds margin-bottom + full-width Post — undo for Buddy */
+body.buddy-feed-active ._feed_inner_text_area_bottom ._feed_inner_text_area_item,
+body.buddy-feed-active ._feed_inner_text_mobile ._feed_inner_text_area_item {
+  margin: 0 !important;
+}
+
+/* Comment row: template uses width:100% on flex children — textarea draws over the avatar */
+body.buddy-feed-active ._feed_inner_comment_box_content {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  width: auto !important;
+}
+
+body.buddy-feed-active ._feed_inner_comment_box_content_txt {
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
+  width: auto !important;
+}
+
+body.buddy-feed-active ._feed_inner_comment_box_content_image ._comment_img {
+  max-width: none !important;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+body.buddy-feed-active ._comment_textarea {
+  box-sizing: border-box;
+}
+
+/* Reaction bar: primary + picker on one row (no floating caret) */
+body.buddy-feed-active ._buddy_timeline_reaction_primary {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0;
+  min-width: 0;
+}
+
+body.buddy-feed-active ._buddy_timeline_reaction_primary > ._feed_inner_timeline_reaction_emoji {
+  flex: 1 1 auto;
+  margin-right: 0 !important;
+}
+
+body.buddy-feed-active ._buddy_reaction_picker_toggle {
+  flex: 0 0 36px !important;
+  width: 36px !important;
+  min-width: 36px !important;
+  height: 48px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+body.buddy-feed-active ._layout_main_wrapper._dark_wrapper ._buddy_reaction_picker_toggle {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+body.buddy-feed-active ._feed_inner_timeline_reaction {
+  align-items: center;
+  gap: 4px;
+}
+
+body.buddy-feed-active ._feed_inner_timeline_reaction_comment._feed_reaction,
+body.buddy-feed-active ._feed_inner_timeline_reaction_share._feed_reaction {
+  flex: 1 1 0%;
+  min-width: 0;
+}
+
+/* Stats row: keep comment/share counts on one baseline */
+body.buddy-feed-active ._feed_inner_timeline_total_reacts_txt {
+  align-items: center;
+  gap: 12px;
+}
+
+body.buddy-feed-active ._feed_inner_timeline_total_reacts_para1,
+body.buddy-feed-active ._feed_inner_timeline_total_reacts_para2 {
+  margin: 0 !important;
+  display: flex;
+  align-items: center;
+  line-height: 1.2;
+}

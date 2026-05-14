@@ -6,8 +6,23 @@ import { displayName } from "./feed-types";
 import { formatRelativeTime, isPostEdited, summarizeLikers } from "./format";
 import { UserAvatar } from "../ui/UserAvatar";
 import { EditPostModal } from "./EditPostModal";
+import {
+  getMyReactionForPost,
+  getShareCounts,
+  incrementShareCount,
+  isPostSaved,
+  setMyPostReaction,
+  setPostHidden,
+  setPostNotify,
+  setPostSaved,
+  getNotifyPostIds,
+  reactionMeta,
+  type UiReaction,
+} from "@/lib/feed-local";
 
 const apiFetch: RequestInit = { credentials: "include" };
+
+const REACTION_ORDER: UiReaction[] = ["LIKE", "LOVE", "HAHA", "WOW", "SAD", "ANGRY"];
 
 async function togglePostLike(postId: string) {
   const res = await fetch(`/api/posts/${postId}/like`, { method: "POST", ...apiFetch });
@@ -79,8 +94,20 @@ function CommentRow({
     }
   }
 
+  async function copyCommentContext() {
+    const url = `${window.location.origin}/feed#post-${postId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      /* */
+    }
+  }
+
   return (
-    <div className={depth > 0 ? "ms-0 border-l-2 border-indigo-100 pl-4 dark:border-indigo-900/50 sm:ms-2" : ""}>
+    <div
+      id={`comment-${node.id}`}
+      className={depth > 0 ? "ms-0 border-l-2 border-indigo-100 pl-4 dark:border-indigo-900/50 sm:ms-2" : ""}
+    >
       <div className="flex gap-3 pt-3">
         <div className="mt-0.5 shrink-0">
           <UserAvatar user={node.author} size={36} />
@@ -119,6 +146,13 @@ function CommentRow({
               onClick={() => setReplyOpen((v) => !v)}
             >
               Reply
+            </button>
+            <button
+              type="button"
+              className="font-medium text-slate-600 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400"
+              onClick={() => void copyCommentContext()}
+            >
+              Share
             </button>
           </div>
 
@@ -175,19 +209,33 @@ export function PostCard({
   post,
   currentUser,
   onPostUpdated,
+  onPostDeleted,
+  onPostHidden,
+  buddySkin = false,
 }: {
   post: FeedPost;
   currentUser: PublicUser;
   onPostUpdated?: (p: FeedPost) => void;
+  onPostDeleted?: (id: string) => void;
+  onPostHidden?: () => void;
+  buddySkin?: boolean;
 }) {
   const [p, setP] = useState(post);
   const [menu, setMenu] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [flash, setFlash] = useState<"copy" | "copy-fail" | null>(null);
+  const [flash, setFlash] = useState<"copy" | "copy-fail" | "saved" | null>(null);
   const [comments, setComments] = useState<CommentNode[]>([]);
   const [commentBody, setCommentBody] = useState("");
   const [busy, setBusy] = useState(false);
+  const [shareCount, setShareCount] = useState(() => getShareCounts()[post.id] ?? 0);
+  const [savedLocal, setSavedLocal] = useState(() => isPostSaved(post.id));
+  const [notifyLocal, setNotifyLocal] = useState(() => getNotifyPostIds().has(post.id));
+  const [showAllComments, setShowAllComments] = useState(false);
+
+  const [myUiReaction, setMyUiReaction] = useState<UiReaction | null>(() => getMyReactionForPost(post.id));
+  const [picker, setPicker] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const pickerRef = useRef<HTMLDivElement>(null);
 
   const reloadComments = useCallback(async () => {
     const res = await fetch(`/api/posts/${p.id}/comments`, apiFetch);
@@ -201,16 +249,22 @@ export function PostCard({
 
   useEffect(() => {
     setP(post);
+    setMyUiReaction(getMyReactionForPost(post.id));
+    setShareCount(getShareCounts()[post.id] ?? 0);
+    setSavedLocal(isPostSaved(post.id));
+    setNotifyLocal(getNotifyPostIds().has(post.id));
   }, [post]);
 
   useEffect(() => {
-    if (!menu) return;
+    if (!menu && !picker) return;
     function onDoc(e: MouseEvent) {
-      if (!menuRef.current?.contains(e.target as Node)) setMenu(false);
+      const t = e.target as Node;
+      if (!menuRef.current?.contains(t)) setMenu(false);
+      if (!pickerRef.current?.contains(t)) setPicker(false);
     }
     document.addEventListener("click", onDoc);
     return () => document.removeEventListener("click", onDoc);
-  }, [menu]);
+  }, [menu, picker]);
 
   async function likePost() {
     setBusy(true);
@@ -222,6 +276,10 @@ export function PostCard({
         likeCount: r.likeCount,
         likedBy: r.likedBy,
       }));
+      if (!r.likedByMe) {
+        setMyPostReaction(p.id, null);
+        setMyUiReaction(null);
+      }
     } finally {
       setBusy(false);
     }
@@ -258,13 +316,370 @@ export function PostCard({
     window.setTimeout(() => setFlash(null), 2200);
   }
 
+  async function sharePost() {
+    const url = `${window.location.origin}/feed#post-${p.id}`;
+    const n = incrementShareCount(p.id);
+    setShareCount(n);
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "Buddy post", text: p.body.slice(0, 140), url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setFlash("copy");
+      }
+    } catch {
+      try {
+        await navigator.clipboard.writeText(url);
+        setFlash("copy");
+      } catch {
+        setFlash("copy-fail");
+      }
+    }
+    window.setTimeout(() => setFlash(null), 2200);
+  }
+
+  async function deletePost() {
+    if (!confirm("Delete this post permanently?")) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/posts/${p.id}`, { method: "DELETE", credentials: "include" });
+      if (!res.ok) return;
+      setMenu(false);
+      onPostDeleted?.(p.id);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const visLabel = p.visibility === "PUBLIC" ? "Public" : "Private";
   const visStyles =
     p.visibility === "PUBLIC"
-      ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400"
-      : "bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200";
+      ? "text-emerald-600 hover:underline dark:text-emerald-400"
+      : "text-amber-700 hover:underline dark:text-amber-300";
 
   const isAuthor = p.author.id === currentUser.id;
+  const saved = savedLocal;
+
+  const displayReaction: UiReaction | null = myUiReaction ?? (p.likedByMe ? "LIKE" : null);
+
+  async function pickReaction(r: UiReaction) {
+    setMyPostReaction(p.id, r);
+    setMyUiReaction(r);
+    setPicker(false);
+    if (r === "LIKE" && !p.likedByMe) await likePost();
+    else if (r !== "LIKE" && !p.likedByMe) await likePost();
+  }
+
+  const commentLimit = 2;
+  const hasMoreComments = comments.length > commentLimit;
+  const shownComments = showAllComments || !hasMoreComments ? comments : comments.slice(0, commentLimit);
+
+  if (buddySkin) {
+    const timelineDropId = `_timeline_drop_${p.id}`;
+    return (
+      <article id={`post-${p.id}`} className="_feed_inner_timeline_post_area _b_radious6 _padd_b24 _padd_t24 _mar_b16 scroll-mt-24">
+        {flash === "copy" ? (
+          <div className="_notification_para" style={{ padding: "8px 16px", textAlign: "center", borderBottom: "1px solid #e0f2e9" }}>
+            Link copied — share it anywhere.
+          </div>
+        ) : null}
+        {flash === "copy-fail" ? (
+          <div className="_notification_para" style={{ padding: "8px 16px", textAlign: "center", borderBottom: "1px solid #fde68a" }}>
+            Could not copy — try again or copy the URL from the address bar.
+          </div>
+        ) : null}
+        {flash === "saved" ? (
+          <div className="_notification_para" style={{ padding: "8px 16px", textAlign: "center", borderBottom: "1px solid #e0e7ff" }}>
+            Saved to your bookmarks list.
+          </div>
+        ) : null}
+
+        <div className="_feed_inner_timeline_content _padd_r24 _padd_l24">
+          <div className="_feed_inner_timeline_post_top">
+            <div className="_feed_inner_timeline_post_box">
+              <div className="_feed_inner_timeline_post_box_image">
+                <div style={{ width: 48, height: 48, margin: "0 auto" }}>
+                  <UserAvatar user={p.author} size={48} shape="rounded-full" />
+                </div>
+              </div>
+              <div className="_feed_inner_timeline_post_box_txt">
+                <h4 className="_feed_inner_timeline_post_box_title">{displayName(p.author)}</h4>
+                <p className="_feed_inner_timeline_post_box_para">
+                  {formatRelativeTime(p.createdAt)} .{" "}
+                  <span>{p.visibility === "PUBLIC" ? "Public" : "Private"}</span>
+                  {isPostEdited(p.createdAt, p.updatedAt) ? <> · Edited</> : null}
+                </p>
+              </div>
+            </div>
+            <div className="_feed_inner_timeline_post_box_dropdown" ref={menuRef}>
+              <div className="_feed_timeline_post_dropdown">
+                <button
+                  type="button"
+                  id={`_timeline_show_drop_btn_${p.id}`}
+                  className="_feed_timeline_post_dropdown_link"
+                  aria-expanded={menu}
+                  aria-controls={timelineDropId}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenu((v) => !v);
+                  }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="4" height="17" fill="none" viewBox="0 0 4 17">
+                    <circle cx="2" cy="2" r="2" fill="#C4C4C4" />
+                    <circle cx="2" cy="8" r="2" fill="#C4C4C4" />
+                    <circle cx="2" cy="15" r="2" fill="#C4C4C4" />
+                  </svg>
+                </button>
+              </div>
+              <div id={timelineDropId} className={`_feed_timeline_dropdown _timeline_dropdown${menu ? " show" : ""}`}>
+                <ul className="_feed_timeline_dropdown_list">
+                  <li className="_feed_timeline_dropdown_item">
+                    <button
+                      type="button"
+                      className="_feed_timeline_dropdown_link"
+                      onClick={() => {
+                        const next = !savedLocal;
+                        setPostSaved(p.id, next);
+                        setSavedLocal(next);
+                        setMenu(false);
+                        if (next) {
+                          setFlash("saved");
+                          window.setTimeout(() => setFlash(null), 2000);
+                        }
+                      }}
+                    >
+                      {saved ? "Unsave post" : "Save Post"}
+                    </button>
+                  </li>
+                  {!isAuthor ? (
+                    <li className="_feed_timeline_dropdown_item">
+                      <button
+                        type="button"
+                        className="_feed_timeline_dropdown_link"
+                        onClick={() => {
+                          const next = !notifyLocal;
+                          setPostNotify(p.id, next);
+                          setNotifyLocal(next);
+                          setMenu(false);
+                        }}
+                      >
+                        {notifyLocal ? "Turn off notifications" : "Turn On Notification"}
+                      </button>
+                    </li>
+                  ) : null}
+                  {!isAuthor ? (
+                    <li className="_feed_timeline_dropdown_item">
+                      <button
+                        type="button"
+                        className="_feed_timeline_dropdown_link"
+                        onClick={() => {
+                          setPostHidden(p.id, true);
+                          setMenu(false);
+                          onPostHidden?.();
+                        }}
+                      >
+                        Hide
+                      </button>
+                    </li>
+                  ) : null}
+                  <li className="_feed_timeline_dropdown_item">
+                    <button type="button" className="_feed_timeline_dropdown_link" onClick={() => void copyPostLink()}>
+                      Copy link
+                    </button>
+                  </li>
+                  {isAuthor ? (
+                    <li className="_feed_timeline_dropdown_item">
+                      <button
+                        type="button"
+                        className="_feed_timeline_dropdown_link"
+                        onClick={() => {
+                          setEditOpen(true);
+                          setMenu(false);
+                        }}
+                      >
+                        Edit post
+                      </button>
+                    </li>
+                  ) : null}
+                  {isAuthor ? (
+                    <li className="_feed_timeline_dropdown_item">
+                      <button type="button" className="_feed_timeline_dropdown_link" onClick={() => void deletePost()} disabled={busy}>
+                        Delete Post
+                      </button>
+                    </li>
+                  ) : null}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <h4 className="_feed_inner_timeline_post_title" style={{ whiteSpace: "pre-wrap", fontWeight: 400 }}>
+            {p.body}
+          </h4>
+          {p.imageUrl ? (
+            <div className="_feed_inner_timeline_image">
+              <img src={p.imageUrl} alt="" className="_time_img" />
+            </div>
+          ) : null}
+        </div>
+
+        <div className="_feed_inner_timeline_total_reacts _padd_r24 _padd_l24 _mar_b26">
+          <div className="_feed_inner_timeline_total_reacts_image">
+            {p.likedBy.slice(0, 5).map((u, i) => (
+              <span key={`${u.id}-${i}`} className="_react_img" style={{ display: "inline-block", width: 28, height: 28, verticalAlign: "middle" }}>
+                <UserAvatar user={u} size={28} shape="rounded-full" />
+              </span>
+            ))}
+            {p.likeCount > 5 ? <p className="_feed_inner_timeline_total_reacts_para">{p.likeCount - 5}+</p> : null}
+          </div>
+          <div className="_feed_inner_timeline_total_reacts_txt">
+            <p className="_feed_inner_timeline_total_reacts_para1">
+              <button type="button" className="_feed_timeline_dropdown_link" style={{ border: "none", background: "none", padding: 0 }}>
+                <span>{p.commentCount}</span> Comment
+              </button>
+            </p>
+            <p className="_feed_inner_timeline_total_reacts_para2">
+              <span>{shareCount}</span> Share
+            </p>
+          </div>
+        </div>
+
+        <div className="_feed_inner_timeline_reaction">
+          <div className="_buddy_timeline_reaction_primary" ref={pickerRef}>
+            <button
+              type="button"
+              className={`_feed_inner_timeline_reaction_emoji _feed_reaction${displayReaction ? " _feed_reaction_active" : ""}`}
+              onClick={() => void likePost()}
+              disabled={busy}
+            >
+              <span className="_feed_inner_timeline_reaction_link">
+                <span>
+                  {displayReaction ? reactionMeta(displayReaction).emoji : "👍"}{" "}
+                  {displayReaction ? reactionMeta(displayReaction).label : "Like"}
+                </span>
+              </span>
+            </button>
+            <button
+              type="button"
+              className="_buddy_reaction_picker_toggle _feed_reaction"
+              aria-label="Choose reaction"
+              onClick={(e) => {
+                e.stopPropagation();
+                setPicker((v) => !v);
+              }}
+            >
+              <span aria-hidden>▾</span>
+            </button>
+            {picker ? (
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: "100%",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  zIndex: 50,
+                  display: "flex",
+                  justifyContent: "center",
+                  marginBottom: 6,
+                  minWidth: 220,
+                }}
+              >
+                <div className="_feed_inner_area _b_radious6" style={{ display: "flex", gap: 4, padding: "6px 10px", boxShadow: "0 4px 12px rgba(0,0,0,.12)" }}>
+                  {REACTION_ORDER.map((r) => (
+                    <button key={r} type="button" className="_feed_reaction" title={reactionMeta(r).label} onClick={(e) => { e.stopPropagation(); void pickReaction(r); }}>
+                      {reactionMeta(r).emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+          <button
+            type="button"
+            className="_feed_inner_timeline_reaction_comment _feed_reaction"
+            onClick={() => document.getElementById(`comment-input-${p.id}`)?.focus()}
+          >
+            <span className="_feed_inner_timeline_reaction_link">
+              <span>Comment</span>
+            </span>
+          </button>
+          <button type="button" className="_feed_inner_timeline_reaction_share _feed_reaction" onClick={() => void sharePost()}>
+            <span className="_feed_inner_timeline_reaction_link">
+              <span>Share</span>
+            </span>
+          </button>
+        </div>
+
+        <div className="_feed_inner_timeline_cooment_area _padd_r24 _padd_l24">
+          <div className="_feed_inner_comment_box">
+            <form
+              className="_feed_inner_comment_box_form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void sendComment();
+              }}
+            >
+              <div className="_feed_inner_comment_box_content">
+                <div className="_feed_inner_comment_box_content_image">
+                  <div className="_comment_img" style={{ width: 40, height: 40 }}>
+                    <UserAvatar user={currentUser} size={40} shape="rounded-full" />
+                  </div>
+                </div>
+                <div className="_feed_inner_comment_box_content_txt">
+                  <textarea
+                    id={`comment-input-${p.id}`}
+                    className="form-control _comment_textarea"
+                    placeholder="Write a comment"
+                    value={commentBody}
+                    onChange={(e) => setCommentBody(e.target.value)}
+                    onKeyDown={(e) => {
+                      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                        e.preventDefault();
+                        void sendComment();
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="_feed_inner_comment_box_icon">
+                <button type="submit" className="_feed_inner_comment_box_icon_btn" disabled={busy}>
+                  Send
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        {comments.length > 0 ? (
+          <div className="_timline_comment_main _padd_r24 _padd_l24">
+            {hasMoreComments && !showAllComments ? (
+              <div className="_previous_comment">
+                <button type="button" className="_previous_comment_txt" onClick={() => setShowAllComments(true)}>
+                  View {comments.length - commentLimit} previous comments
+                </button>
+              </div>
+            ) : null}
+            {shownComments.map((c) => (
+              <CommentRow key={c.id} c={c} postId={p.id} depth={0} onThreadChange={reloadComments} viewer={currentUser} />
+            ))}
+          </div>
+        ) : null}
+
+        {editOpen ? (
+          <EditPostModal
+            open={editOpen}
+            onClose={() => setEditOpen(false)}
+            post={p}
+            currentUser={currentUser}
+            onSaved={(next) => {
+              setP(next);
+              onPostUpdated?.(next);
+            }}
+          />
+        ) : null}
+      </article>
+    );
+  }
 
   return (
     <article
@@ -281,6 +696,11 @@ export function PostCard({
           Could not copy — try again or copy the URL from the address bar.
         </div>
       ) : null}
+      {flash === "saved" ? (
+        <div className="border-b border-indigo-100 bg-indigo-50 px-4 py-2 text-center text-xs font-semibold text-indigo-900 dark:border-indigo-900/30 dark:bg-indigo-950/40 dark:text-indigo-200">
+          Saved to your bookmarks list.
+        </div>
+      ) : null}
 
       <div className="border-b border-slate-100 px-5 py-4 dark:border-slate-800 sm:px-6">
         <div className="flex items-start justify-between gap-3">
@@ -290,23 +710,15 @@ export function PostCard({
               <h3 className="truncate font-semibold text-slate-900 dark:text-white">{displayName(p.author)}</h3>
               <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                 <span>{formatRelativeTime(p.createdAt)}</span>
+                <span aria-hidden>·</span>
+                <span className={visStyles}>{visLabel}</span>
                 {isPostEdited(p.createdAt, p.updatedAt) ? (
                   <span className="text-slate-400 dark:text-slate-500">· Edited</span>
                 ) : null}
-                <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${visStyles}`}>{visLabel}</span>
               </p>
             </div>
           </div>
           <div className="relative flex shrink-0 items-center gap-1" ref={menuRef}>
-            {isAuthor ? (
-              <button
-                type="button"
-                className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
-                onClick={() => setEditOpen(true)}
-              >
-                Edit
-              </button>
-            ) : null}
             <button
               type="button"
               className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
@@ -324,7 +736,57 @@ export function PostCard({
               </svg>
             </button>
             {menu ? (
-              <div className="absolute right-0 top-full z-50 mt-1 min-w-[180px] rounded-xl border border-slate-200 bg-white py-1 text-sm shadow-xl dark:border-slate-700 dark:bg-slate-900">
+              <div className="absolute right-0 top-full z-50 mt-1 min-w-[200px] rounded-xl border border-slate-200 bg-white py-1 text-sm shadow-xl dark:border-slate-700 dark:bg-slate-900">
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
+                  onClick={() => {
+                    const next = !savedLocal;
+                    setPostSaved(p.id, next);
+                    setSavedLocal(next);
+                    setMenu(false);
+                    if (next) {
+                      setFlash("saved");
+                      window.setTimeout(() => setFlash(null), 2000);
+                    }
+                  }}
+                >
+                  <span>🔖</span> {saved ? "Unsave post" : "Save post"}
+                </button>
+                {!isAuthor ? (
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
+                    onClick={() => {
+                      const next = !notifyLocal;
+                      setPostNotify(p.id, next);
+                      setNotifyLocal(next);
+                      setMenu(false);
+                    }}
+                  >
+                    <span>🔔</span> {notifyLocal ? "Turn off notifications" : "Turn on notifications"}
+                  </button>
+                ) : null}
+                {!isAuthor ? (
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
+                    onClick={() => {
+                      setPostHidden(p.id, true);
+                      setMenu(false);
+                      onPostHidden?.();
+                    }}
+                  >
+                    <span>🚫</span> Hide post
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
+                  onClick={() => void copyPostLink()}
+                >
+                  <span>🔗</span> Copy link
+                </button>
                 {isAuthor ? (
                   <button
                     type="button"
@@ -340,16 +802,16 @@ export function PostCard({
                     Edit post
                   </button>
                 ) : null}
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
-                  onClick={() => void copyPostLink()}
-                >
-                  <svg className="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                  Copy link
-                </button>
+                {isAuthor ? (
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30"
+                    onClick={() => void deletePost()}
+                    disabled={busy}
+                  >
+                    <span>🗑</span> Delete post
+                  </button>
+                ) : null}
               </div>
             ) : null}
           </div>
@@ -375,9 +837,14 @@ export function PostCard({
             </span>
           ) : null}
         </div>
-        <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-          {p.commentCount} comment{p.commentCount === 1 ? "" : "s"}
-        </span>
+        <div className="flex flex-wrap items-center gap-3 text-sm font-medium text-slate-600 dark:text-slate-400">
+          <button type="button" className="hover:text-indigo-600 dark:hover:text-indigo-400" onClick={() => document.getElementById(`comment-input-${p.id}`)?.focus()}>
+            {p.commentCount} comment{p.commentCount === 1 ? "" : "s"}
+          </button>
+          <span>
+            {shareCount} share{shareCount === 1 ? "" : "s"}
+          </span>
+        </div>
       </div>
 
       {p.likeCount > 0 ? (
@@ -386,34 +853,67 @@ export function PostCard({
         </p>
       ) : null}
 
-      <div className="flex divide-x divide-slate-100 dark:divide-slate-800">
-        <button
-          type="button"
-          className={`flex flex-1 items-center justify-center gap-2 py-3 text-sm font-semibold transition ${
-            p.likedByMe ? "text-indigo-600 dark:text-indigo-400" : "text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800/80"
-          }`}
-          onClick={() => void likePost()}
-          disabled={busy}
-        >
-          <span className="text-lg leading-none">👍</span>
-          Like
-        </button>
+      <div className="relative flex divide-x divide-slate-100 dark:divide-slate-800" ref={pickerRef}>
+        <div className="relative flex flex-1">
+          <button
+            type="button"
+            className={`flex flex-1 items-center justify-center gap-2 py-3 text-sm font-semibold transition ${
+              displayReaction ? "text-indigo-600 dark:text-indigo-400" : "text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800/80"
+            }`}
+            onClick={() => void likePost()}
+            disabled={busy}
+          >
+            <span className="text-lg leading-none">{displayReaction ? reactionMeta(displayReaction).emoji : "👍"}</span>
+            {displayReaction ? reactionMeta(displayReaction).label : "Like"}
+          </button>
+          <button
+            type="button"
+            className="absolute right-1 top-1/2 -translate-y-1/2 rounded-lg px-1.5 py-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+            aria-label="Choose reaction"
+            onClick={(e) => {
+              e.stopPropagation();
+              setPicker((v) => !v);
+            }}
+          >
+            ▾
+          </button>
+          {picker ? (
+            <div className="absolute bottom-full left-0 right-0 z-40 mb-1 flex justify-center px-2">
+              <div className="flex gap-1 rounded-full border border-slate-200 bg-white px-2 py-1.5 shadow-xl dark:border-slate-600 dark:bg-slate-800">
+                {REACTION_ORDER.map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    className="rounded-full p-1.5 text-lg hover:bg-slate-100 dark:hover:bg-slate-700"
+                    title={reactionMeta(r).label}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void pickReaction(r);
+                    }}
+                  >
+                    {reactionMeta(r).emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
         <button
           type="button"
           className="flex flex-1 items-center justify-center gap-2 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800/80"
           onClick={(e) => {
             e.preventDefault();
-            document.getElementById(`comment-${p.id}`)?.focus();
+            document.getElementById(`comment-input-${p.id}`)?.focus();
           }}
         >
           💬 Comment
         </button>
         <button
           type="button"
-          className="hidden flex-1 items-center justify-center gap-2 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800/80 sm:flex"
-          onClick={() => void copyPostLink()}
+          className="flex flex-1 items-center justify-center gap-2 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800/80"
+          onClick={() => void sharePost()}
         >
-          🔗 Copy
+          ↗ Share
         </button>
       </div>
 
@@ -424,7 +924,7 @@ export function PostCard({
           </div>
           <div className="min-w-0 flex-1">
             <textarea
-              id={`comment-${p.id}`}
+              id={`comment-input-${p.id}`}
               className="min-h-[72px] w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
               placeholder="Write a comment"
               value={commentBody}
@@ -456,7 +956,16 @@ export function PostCard({
 
       {comments.length > 0 ? (
         <div className="border-t border-slate-100 px-5 pb-4 pt-1 dark:border-slate-800 sm:px-6">
-          {comments.map((c) => (
+          {hasMoreComments && !showAllComments ? (
+            <button
+              type="button"
+              className="mt-2 w-full rounded-lg py-2 text-left text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800/60"
+              onClick={() => setShowAllComments(true)}
+            >
+              View {comments.length - commentLimit} previous comments
+            </button>
+          ) : null}
+          {shownComments.map((c) => (
             <CommentRow key={c.id} c={c} postId={p.id} depth={0} onThreadChange={reloadComments} viewer={currentUser} />
           ))}
         </div>

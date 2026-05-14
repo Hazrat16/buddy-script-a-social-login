@@ -671,3 +671,73 @@ postsRouter.post("/:postId/comments", requireAuth, asyncHandler(async (req, res)
     },
   });
 }));
+
+postsRouter.get("/:postId", requireAuth, asyncHandler(async (req, res) => {
+  const { postId } = req.params;
+  const session = req.auth!;
+
+  const post = await prisma.post.findFirst({
+    where: {
+      id: postId,
+      OR: [{ visibility: Visibility.PUBLIC }, { authorId: session.sub }],
+    },
+    include: {
+      author: { select: { id: true, firstName: true, lastName: true } },
+      _count: { select: { likes: true, comments: true } },
+      likes: {
+        orderBy: { createdAt: "desc" },
+        take: LIKER_PREVIEW,
+        select: {
+          userId: true,
+          user: { select: { id: true, firstName: true, lastName: true } },
+        },
+      },
+    },
+  });
+  if (!post) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+
+  const myLike = await prisma.postLike.findUnique({
+    where: { postId_userId: { postId, userId: session.sub } },
+  });
+
+  res.json({
+    post: {
+      id: post.id,
+      body: post.body,
+      imageUrl: post.imageUrl,
+      visibility: post.visibility,
+      createdAt: post.createdAt.toISOString(),
+      updatedAt: post.updatedAt.toISOString(),
+      author: post.author,
+      likeCount: post._count.likes,
+      commentCount: post._count.comments,
+      likedByMe: !!myLike,
+      likedBy: post.likes.map((l) => ({
+        id: l.user.id,
+        firstName: l.user.firstName,
+        lastName: l.user.lastName,
+      })),
+    },
+  });
+}));
+
+postsRouter.delete("/:postId", requireAuth, asyncHandler(async (req, res) => {
+  const { postId } = req.params;
+  const session = req.auth!;
+
+  const owned = await prisma.post.findFirst({
+    where: { id: postId, authorId: session.sub },
+    select: { id: true, imageUrl: true },
+  });
+  if (!owned) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+
+  await unlinkUploadsFile(owned.imageUrl);
+  await prisma.post.delete({ where: { id: postId } });
+  res.json({ ok: true });
+}));

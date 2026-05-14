@@ -8,6 +8,7 @@ import { requireAuth } from "./middleware/requireAuth";
 import { authRouter } from "./routes/auth";
 import { commentsRouter } from "./routes/comments";
 import { getMyPostsHandler, postsRouter } from "./routes/posts";
+import { usersRouter } from "./routes/users";
 
 const app = express();
 const PORT = Number(process.env.API_PORT) || 3001;
@@ -30,6 +31,7 @@ app.get("/api/auth/me/posts", requireAuth, getMyPostsHandler);
 app.use("/api/auth", authRouter);
 app.use("/api/posts", postsRouter);
 app.use("/api/comments", commentsRouter);
+app.use("/api/users", usersRouter);
 
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);
