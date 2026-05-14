@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { BuddyAuthShapes } from "@/components/marketing/BuddyAuthShapes";
 import { useBuddyAuthAssets } from "@/components/marketing/useBuddyAuthAssets";
@@ -15,7 +14,6 @@ function useHeroImgFallback() {
 
 export default function RegisterPage() {
   useBuddyAuthAssets(true);
-  const router = useRouter();
   const onHeroError = useHeroImgFallback();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -50,8 +48,7 @@ export default function RegisterPage() {
         setErr(data.error || "Registration failed");
         return;
       }
-      router.push("/feed");
-      router.refresh();
+      window.location.assign("/feed");
     } finally {
       setLoading(false);
     }

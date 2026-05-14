@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { BuddyAuthShapes } from "@/components/marketing/BuddyAuthShapes";
 import { useBuddyAuthAssets } from "@/components/marketing/useBuddyAuthAssets";
@@ -15,7 +14,6 @@ function useHeroImgFallback() {
 
 export default function LoginPage() {
   useBuddyAuthAssets(true);
-  const router = useRouter();
   const onHeroError = useHeroImgFallback();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -39,8 +37,8 @@ export default function LoginPage() {
         setErr(data.error || "Login failed");
         return;
       }
-      router.push("/feed");
-      router.refresh();
+      /** Full navigation: ensures `Set-Cookie` is applied before `/feed` (client `router.push` can race middleware / RSC in production). */
+      window.location.assign("/feed");
     } finally {
       setLoading(false);
     }
