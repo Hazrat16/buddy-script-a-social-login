@@ -1,6 +1,6 @@
 # Web (Next.js)
 
-Frontend only. All REST endpoints live in **`apps/api`** (Express). The browser calls **`/api/*` on the same host as the Next app** (e.g. `https://…vercel.app/api/...`). Next.js **serverless routes** forward those requests to Express using **`BACKEND_API_URL`** (recommended) or **`NEXT_API_BASE_URL`** / legacy **`API_INTERNAL_URL`**. **`/uploads/*`** is rewritten in `next.config` to the same API base.
+Frontend only. All REST endpoints live in **`apps/api`** (Express). The browser calls **`/api/*` on the same host as the Next app** (e.g. `https://…vercel.app/api/...`). Next.js **App Router handlers** (`app/api/[...path]/route.ts`) forward those requests to Express using **`BACKEND_API_URL`** (recommended) or **`NEXT_API_BASE_URL`** / legacy **`API_INTERNAL_URL`**. Post images use **`/uploads/...`** on the same host; **`app/uploads/[[...path]]/route.ts`** proxies those to the same API base (same mechanism as `/api/*`).
 
 ## Local
 
@@ -22,7 +22,7 @@ Or: `npm run build` here (API should be built first if you rely on a full stack 
 
 ## Production API URL
 
-Set **`BACKEND_API_URL`** or **`NEXT_API_BASE_URL`** to your deployed Express base (example: `https://buddy-script-a-social-platform-production.up.railway.app`). **Do not** set it to your Vercel site URL — that is the frontend, not the API. Vercel / CI must provide this **at build time** as well as runtime so `next.config` rewrites and optional image hosts resolve correctly.
+Set **`BACKEND_API_URL`** or **`NEXT_API_BASE_URL`** to your deployed Express base (example: `https://buddy-script-a-social-platform-production.up.railway.app`). **Do not** set it to your Vercel site URL — that is the frontend, not the API. Vercel / CI must provide this **at build time** as well as runtime so `next.config` image `remotePatterns` and the `/api` + `/uploads` proxies resolve correctly.
 
 On **`apps/api`**, set **`WEB_ORIGIN`** to the exact origin users use in the browser (your Next app URL) so CORS works for any server-side or tooling that calls the API directly.
 

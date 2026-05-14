@@ -19,7 +19,7 @@ npm run dev
 If you already run Postgres on 5432 and want to use that instead of Docker, set `DATABASE_URL` to that server and skip `docker compose`.
 
 - **Web**: [http://localhost:3000](http://localhost:3000)  
-- **API**: [http://127.0.0.1:3001](http://127.0.0.1:3001) (used internally; the browser talks to `/api` and `/uploads` on port 3000 via Next.js rewrites)
+- **API**: [http://127.0.0.1:3001](http://127.0.0.1:3001) (used internally; the browser talks to `/api` and `/uploads` on port 3000 via Next.js route handlers that proxy to the API)
 
 ## Environment
 
@@ -30,7 +30,7 @@ The **database URL is only in the API** (`apps/api/.env`), not in the web app.
 | **`apps/api/.env`** | **`DATABASE_URL`** (Prisma), `AUTH_SECRET`, `API_PORT`, `WEB_ORIGIN` |
 | **`apps/web/.env`** | `AUTH_SECRET` (must match API), **`BACKEND_API_URL`** or **`NEXT_API_BASE_URL`** (Express / Railway origin only — **not** your Vercel site URL; legacy `API_INTERNAL_URL` still works) |
 
-**Production web → API:** set **`BACKEND_API_URL`** (preferred) or **`NEXT_API_BASE_URL`** on the Next.js service to your **Express** base URL (e.g. Railway), **not** the Vercel frontend URL. The app proxies `/api/*` server-side and rewrites `/uploads/*` to that host. Set this **before `next build`** on Vercel (enable for **Build** + **Production**). Ensure **`WEB_ORIGIN`** on the API matches the browser origin of your Next app (CORS). The **browser** still calls **`https://<your-next-host>/api/...`** so session cookies stay on the Next origin; see `apps/web/README.md` (“Vercel + Railway”).
+**Production web → API:** set **`BACKEND_API_URL`** (preferred) or **`NEXT_API_BASE_URL`** on the Next.js service to your **Express** base URL (e.g. Railway), **not** the Vercel frontend URL. The app proxies **`/api/*`** and **`/uploads/*`** from Next to that host. Set this **before `next build`** on Vercel (enable for **Build** + **Production**). Ensure **`WEB_ORIGIN`** on the API matches the browser origin of your Next app (CORS). The **browser** still calls **`https://<your-next-host>/api/...`** so session cookies stay on the Next origin; see `apps/web/README.md` (“Vercel + Railway”).
 
 **Example (Docker Compose in this repo):** `postgresql://postgres:postgres@localhost:5433/social_app?schema=public`
 
@@ -61,7 +61,7 @@ apps/
 
 ## Troubleshooting
 
-`npm run dev` starts the **API first**, runs a small **Node wait script** until port **3001** accepts connections, then starts Next — so `/api` rewrites do not hit a dead server.
+`npm run dev` starts the **API first**, runs a small **Node wait script** until port **3001** accepts connections, then starts Next — so `/api` and `/uploads` proxies do not hit a dead server.
 
 If login or register returns **503** with a message about **database tables**, Postgres is reachable but the schema was never applied — run **`npm run db:push`** from the repo root (after `docker:up` if you use Docker).
 

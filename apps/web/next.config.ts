@@ -46,10 +46,5 @@ const nextConfig: NextConfig = {
             ...(apiPattern ? [apiPattern] : []),
         ],
     },
-    async rewrites() {
-        return {
-            fallback: [{ source: "/uploads/:path*", destination: `${apiInternal}/uploads/:path*` }],
-        };
-    },
 };
 export default nextConfig;
