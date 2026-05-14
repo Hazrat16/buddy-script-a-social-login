@@ -1,29 +1,36 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { CommentNode, FeedPost, PublicUser } from "./feed-types";
-import { displayName } from "./feed-types";
-import { formatRelativeTime, isPostEdited, summarizeLikers } from "./format";
-import { UserAvatar } from "../ui/UserAvatar";
 import { useComingSoon } from "@/components/ui/ComingSoonProvider";
-import { EditPostModal } from "./EditPostModal";
 import {
   getMyReactionForPost,
+  getNotifyPostIds,
   getShareCounts,
   incrementShareCount,
   isPostSaved,
+  reactionMeta,
   setMyPostReaction,
   setPostHidden,
   setPostNotify,
   setPostSaved,
-  getNotifyPostIds,
-  reactionMeta,
   type UiReaction,
 } from "@/lib/feed-local";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { UserAvatar } from "../ui/UserAvatar";
+import { EditPostModal } from "./EditPostModal";
+import type { CommentNode, FeedPost, PublicUser } from "./feed-types";
+import { displayName } from "./feed-types";
+import { formatRelativeTime, isPostEdited, summarizeLikers } from "./format";
 
 const apiFetch: RequestInit = { credentials: "include" };
 
-const REACTION_ORDER: UiReaction[] = ["LIKE", "LOVE", "HAHA", "WOW", "SAD", "ANGRY"];
+const REACTION_ORDER: UiReaction[] = [
+  "LIKE",
+  "LOVE",
+  "HAHA",
+  "WOW",
+  "SAD",
+  "ANGRY",
+];
 
 /** Total comments in a thread (node + nested replies). */
 function countCommentSubtree(node: CommentNode): number {
@@ -40,7 +47,9 @@ const COMMENT_PREVIEW_MAX = 4;
 type CommentFlatEntry = { node: CommentNode; depth: number };
 
 /** Flatten all comments, sort oldest → newest by `createdAt` (then id). */
-function flattenCommentsChronological(roots: CommentNode[]): CommentFlatEntry[] {
+function flattenCommentsChronological(
+  roots: CommentNode[],
+): CommentFlatEntry[] {
   const acc: CommentFlatEntry[] = [];
   function walk(nodes: CommentNode[], depth: number) {
     for (const n of nodes) {
@@ -57,7 +66,10 @@ function flattenCommentsChronological(roots: CommentNode[]): CommentFlatEntry[] 
 }
 
 /** Keep the `maxVisible` newest comments (same order as returned by flatten). */
-function sliceRecentCommentsFlat(roots: CommentNode[], maxVisible: number): CommentFlatEntry[] {
+function sliceRecentCommentsFlat(
+  roots: CommentNode[],
+  maxVisible: number,
+): CommentFlatEntry[] {
   const flat = flattenCommentsChronological(roots);
   if (flat.length <= maxVisible) return flat;
   return flat.slice(-maxVisible);
@@ -72,22 +84,44 @@ function formatFacepileOverflow(n: number): string {
 }
 
 async function togglePostLike(postId: string) {
-  const res = await fetch(`/api/posts/${postId}/like`, { method: "POST", ...apiFetch });
+  const res = await fetch(`/api/posts/${postId}/like`, {
+    method: "POST",
+    ...apiFetch,
+  });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Like failed");
-  return data as { likedByMe: boolean; likeCount: number; likedBy: PublicUser[] };
+  return data as {
+    likedByMe: boolean;
+    likeCount: number;
+    likedBy: PublicUser[];
+  };
 }
 
 async function toggleCommentLike(commentId: string) {
-  const res = await fetch(`/api/comments/${commentId}/like`, { method: "POST", ...apiFetch });
+  const res = await fetch(`/api/comments/${commentId}/like`, {
+    method: "POST",
+    ...apiFetch,
+  });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Like failed");
-  return data as { likedByMe: boolean; likeCount: number; likedBy: PublicUser[] };
+  return data as {
+    likedByMe: boolean;
+    likeCount: number;
+    likedBy: PublicUser[];
+  };
 }
 
 function buddyFbCommentMic() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" className="_buddy_fb_composer_ico" aria-hidden>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="18"
+      height="18"
+      fill="none"
+      viewBox="0 0 24 24"
+      className="_buddy_fb_composer_ico"
+      aria-hidden
+    >
       <path
         stroke="currentColor"
         strokeWidth="1.6"
@@ -102,7 +136,15 @@ function buddyFbCommentMic() {
 
 function buddyFbCommentPhoto() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" className="_buddy_fb_composer_ico" aria-hidden>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="18"
+      height="18"
+      fill="none"
+      viewBox="0 0 24 24"
+      className="_buddy_fb_composer_ico"
+      aria-hidden
+    >
       <path
         fill="currentColor"
         d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
@@ -129,7 +171,14 @@ function buddyFbReactionCommentIcon() {
         strokeWidth="1"
         d="M1 10.5c0-.464 0-.696.009-.893A9 9 0 019.607 1.01C9.804 1 10.036 1 10.5 1v0c.464 0 .696 0 .893.009a9 9 0 018.598 8.598c.009.197.009.429.009.893v6.046c0 1.36 0 2.041-.317 2.535a2 2 0 01-.602.602c-.494.317-1.174.317-2.535.317H10.5c-.464 0-.696 0-.893-.009a9 9 0 01-8.598-8.598C1 11.196 1 10.964 1 10.5v0z"
       />
-      <path fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" d="M6.938 9.313h7.125M10.5 14.063h3.563" />
+      <path
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M6.938 9.313h7.125M10.5 14.063h3.563"
+      />
     </svg>
   );
 }
@@ -159,13 +208,23 @@ function buddyFbReactionShareIcon() {
 /** Matches `public/feed.html` Haha reaction graphic + label row. */
 function buddyFbReactionHahaSvg() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" fill="none" viewBox="0 0 19 19" aria-hidden>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="19"
+      height="19"
+      fill="none"
+      viewBox="0 0 19 19"
+      aria-hidden
+    >
       <path fill="#FFCC4D" d="M9.5 19a9.5 9.5 0 100-19 9.5 9.5 0 000 19z" />
       <path
         fill="#664500"
         d="M9.5 11.083c-1.912 0-3.181-.222-4.75-.527-.358-.07-1.056 0-1.056 1.055 0 2.111 2.425 4.75 5.806 4.75 3.38 0 5.805-2.639 5.805-4.75 0-1.055-.697-1.125-1.055-1.055-1.57.305-2.838.527-4.75.527z"
       />
-      <path fill="#fff" d="M4.75 11.611s1.583.528 4.75.528 4.75-.528 4.75-.528-1.056 2.111-4.75 2.111-4.75-2.11-4.75-2.11z" />
+      <path
+        fill="#fff"
+        d="M4.75 11.611s1.583.528 4.75.528 4.75-.528 4.75-.528-1.056 2.111-4.75 2.111-4.75-2.11-4.75-2.11z"
+      />
       <path
         fill="#664500"
         d="M6.333 8.972c.729 0 1.32-.827 1.32-1.847s-.591-1.847-1.32-1.847c-.729 0-1.32.827-1.32 1.847s.591 1.847 1.32 1.847zM12.667 8.972c.729 0 1.32-.827 1.32-1.847s-.591-1.847-1.32-1.847c-.729 0-1.32.827-1.32 1.847s.591 1.847 1.32 1.847z"
@@ -174,7 +233,11 @@ function buddyFbReactionHahaSvg() {
   );
 }
 
-function BuddyPrimaryReactionInner({ displayReaction }: { displayReaction: UiReaction | null }) {
+function BuddyPrimaryReactionInner({
+  displayReaction,
+}: {
+  displayReaction: UiReaction | null;
+}) {
   if (displayReaction === "HAHA") {
     return (
       <>
@@ -189,7 +252,14 @@ function BuddyPrimaryReactionInner({ displayReaction }: { displayReaction: UiRea
 
 function buddyFbBadgeThumb() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" className="_buddy_fb_badge_thumb" aria-hidden>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      className="_buddy_fb_badge_thumb"
+      aria-hidden
+    >
       <path
         fill="currentColor"
         d="M1 21h4V9H1v12zm21.83-9.72c.18-.47.27-1.03.27-1.58 0-1.1-.9-2-2-2h-2.62l.95-4.57c.02-.13.03-.26.03-.39 0-.62-.28-1.18-.76-1.53L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l2.02-5.41c.12-.31.19-.64.19-.98l-.04-.11z"
@@ -200,7 +270,14 @@ function buddyFbBadgeThumb() {
 
 function buddyFbBadgeHeart() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" className="_buddy_fb_badge_heart" aria-hidden>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      className="_buddy_fb_badge_heart"
+      aria-hidden
+    >
       <path
         fill="currentColor"
         d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
@@ -281,7 +358,14 @@ function CommentRow({
 
   if (buddySkin) {
     return (
-      <div id={`comment-${node.id}`} className={depth > 0 ? "_buddy_fb_comment_root _buddy_fb_comment_root_reply" : "_buddy_fb_comment_root"}>
+      <div
+        id={`comment-${node.id}`}
+        className={
+          depth > 0
+            ? "_buddy_fb_comment_root _buddy_fb_comment_root_reply"
+            : "_buddy_fb_comment_root"
+        }
+      >
         <div className="_buddy_fb_comment_row">
           <div className="_buddy_fb_comment_avatar_slot">
             <UserAvatar user={node.author} size={32} shape="rounded-full" />
@@ -289,36 +373,62 @@ function CommentRow({
           <div className="_buddy_fb_comment_main">
             <div className="_buddy_fb_comment_bubble_wrap">
               <div className="_buddy_fb_comment_bubble">
-                <div className="_buddy_fb_comment_author">{displayName(node.author)}</div>
+                <div className="_buddy_fb_comment_author">
+                  {displayName(node.author)}
+                </div>
                 <p className="_buddy_fb_comment_body">{node.body}</p>
               </div>
               {node.likeCount > 0 ? (
-                <div className="_buddy_fb_comment_react_badge" aria-label={`${node.likeCount} reactions`}>
+                <div
+                  className="_buddy_fb_comment_react_badge"
+                  aria-label={`${node.likeCount} reactions`}
+                >
                   <span className="_buddy_fb_comment_react_ico" aria-hidden>
                     {buddyFbBadgeThumb()}
                   </span>
                   <span className="_buddy_fb_comment_react_ico" aria-hidden>
                     {buddyFbBadgeHeart()}
                   </span>
-                  <span className="_buddy_fb_comment_react_cnt">{node.likeCount}</span>
+                  <span className="_buddy_fb_comment_react_cnt">
+                    {node.likeCount}
+                  </span>
                 </div>
               ) : null}
             </div>
-            {node.likedBy.length > 0 ? <p className="_buddy_fb_comment_likers_txt">{summarizeLikers(node.likedBy, node.likeCount)}</p> : null}
+            {node.likedBy.length > 0 ? (
+              <p className="_buddy_fb_comment_likers_txt">
+                {summarizeLikers(node.likedBy, node.likeCount)}
+              </p>
+            ) : null}
             <div className="_buddy_fb_comment_actions">
-              <button type="button" className="_buddy_fb_comment_action" onClick={() => void like()} disabled={busy}>
+              <button
+                type="button"
+                className="_buddy_fb_comment_action"
+                onClick={() => void like()}
+                disabled={busy}
+              >
                 {node.likedByMe ? "Unlike." : "Like."}
               </button>
               <span className="_buddy_fb_action_sep">·</span>
-              <button type="button" className="_buddy_fb_comment_action" onClick={() => setReplyOpen((v) => !v)}>
+              <button
+                type="button"
+                className="_buddy_fb_comment_action"
+                onClick={() => setReplyOpen((v) => !v)}
+              >
                 Reply.
               </button>
               <span className="_buddy_fb_action_sep">·</span>
-              <button type="button" className="_buddy_fb_comment_action" onClick={() => void copyCommentContext()}>
+              <button
+                type="button"
+                className="_buddy_fb_comment_action"
+                onClick={() => void copyCommentContext()}
+              >
                 Share
               </button>
               <span className="_buddy_fb_action_sep">·</span>
-              <span className="_buddy_fb_comment_time">{formatRelativeTime(node.createdAt)}</span>
+              <span className="_buddy_fb_comment_time">
+                {formatRelativeTime(node.createdAt)}
+              </span>
             </div>
 
             {replyOpen ? (
@@ -376,7 +486,16 @@ function CommentRow({
         </div>
         {node.replies.length > 0 && !flatListMode
           ? node.replies.map((r) => (
-              <CommentRow key={r.id} c={r} postId={postId} depth={depth + 1} onThreadChange={onThreadChange} viewer={viewer} buddySkin flatListMode={false} />
+              <CommentRow
+                key={r.id}
+                c={r}
+                postId={postId}
+                depth={depth + 1}
+                onThreadChange={onThreadChange}
+                viewer={viewer}
+                buddySkin
+                flatListMode={false}
+              />
             ))
           : null}
       </div>
@@ -386,7 +505,11 @@ function CommentRow({
   return (
     <div
       id={`comment-${node.id}`}
-      className={depth > 0 ? "ms-0 border-l-2 border-indigo-100 pl-4 dark:border-indigo-900/50 sm:ms-2" : ""}
+      className={
+        depth > 0
+          ? "ms-0 border-l-2 border-indigo-100 pl-4 dark:border-indigo-900/50 sm:ms-2"
+          : ""
+      }
     >
       <div className="flex gap-3 pt-3">
         <div className="mt-0.5 shrink-0">
@@ -394,14 +517,25 @@ function CommentRow({
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0">
-            <span className="font-semibold text-slate-900 dark:text-white">{displayName(node.author)}</span>
-            <span className="text-xs text-slate-500 dark:text-slate-500">{formatRelativeTime(node.createdAt)}</span>
+            <span className="font-semibold text-slate-900 dark:text-white">
+              {displayName(node.author)}
+            </span>
+            <span className="text-xs text-slate-500 dark:text-slate-500">
+              {formatRelativeTime(node.createdAt)}
+            </span>
           </div>
-          <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-300">{node.body}</p>
+          <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+            {node.body}
+          </p>
           {node.likeCount > 0 ? (
             <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
               <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400">
-                <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+                <svg
+                  className="h-3 w-3"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden
+                >
                   <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                 </svg>
               </span>
@@ -409,7 +543,9 @@ function CommentRow({
             </div>
           ) : null}
           {node.likedBy.length > 0 ? (
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">{summarizeLikers(node.likedBy, node.likeCount)}</p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">
+              {summarizeLikers(node.likedBy, node.likeCount)}
+            </p>
           ) : null}
           <div className="mt-2 flex flex-wrap gap-3 text-sm">
             <button
@@ -454,8 +590,14 @@ function CommentRow({
                 />
               </div>
               <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
-                <kbd className="rounded border border-slate-200 bg-white px-1 font-mono dark:border-slate-600 dark:bg-slate-800">⌘</kbd>+
-                <kbd className="rounded border border-slate-200 bg-white px-1 font-mono dark:border-slate-600 dark:bg-slate-800">Enter</kbd> send
+                <kbd className="rounded border border-slate-200 bg-white px-1 font-mono dark:border-slate-600 dark:bg-slate-800">
+                  ⌘
+                </kbd>
+                +
+                <kbd className="rounded border border-slate-200 bg-white px-1 font-mono dark:border-slate-600 dark:bg-slate-800">
+                  Enter
+                </kbd>{" "}
+                send
               </p>
               <div className="mt-2 flex justify-end gap-2">
                 <button
@@ -480,7 +622,15 @@ function CommentRow({
       </div>
       {node.replies.length > 0 && !flatListMode
         ? node.replies.map((r) => (
-            <CommentRow key={r.id} c={r} postId={postId} depth={depth + 1} onThreadChange={onThreadChange} viewer={viewer} flatListMode={false} />
+            <CommentRow
+              key={r.id}
+              c={r}
+              postId={postId}
+              depth={depth + 1}
+              onThreadChange={onThreadChange}
+              viewer={viewer}
+              flatListMode={false}
+            />
           ))
         : null}
     </div>
@@ -505,16 +655,24 @@ export function PostCard({
   const [p, setP] = useState(post);
   const [menu, setMenu] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [flash, setFlash] = useState<"copy" | "copy-fail" | "saved" | null>(null);
+  const [flash, setFlash] = useState<"copy" | "copy-fail" | "saved" | null>(
+    null,
+  );
   const [comments, setComments] = useState<CommentNode[]>([]);
   const [commentBody, setCommentBody] = useState("");
   const [busy, setBusy] = useState(false);
-  const [shareCount, setShareCount] = useState(() => getShareCounts()[post.id] ?? 0);
+  const [shareCount, setShareCount] = useState(
+    () => getShareCounts()[post.id] ?? 0,
+  );
   const [savedLocal, setSavedLocal] = useState(() => isPostSaved(post.id));
-  const [notifyLocal, setNotifyLocal] = useState(() => getNotifyPostIds().has(post.id));
+  const [notifyLocal, setNotifyLocal] = useState(() =>
+    getNotifyPostIds().has(post.id),
+  );
   const [showAllComments, setShowAllComments] = useState(false);
 
-  const [myUiReaction, setMyUiReaction] = useState<UiReaction | null>(() => getMyReactionForPost(post.id));
+  const [myUiReaction, setMyUiReaction] = useState<UiReaction | null>(() =>
+    getMyReactionForPost(post.id),
+  );
   const [picker, setPicker] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
@@ -541,7 +699,10 @@ export function PostCard({
     }, 200);
   }, [clearReactionPickerHoverTimer]);
 
-  useEffect(() => () => clearReactionPickerHoverTimer(), [clearReactionPickerHoverTimer]);
+  useEffect(
+    () => () => clearReactionPickerHoverTimer(),
+    [clearReactionPickerHoverTimer],
+  );
 
   const reloadComments = useCallback(async () => {
     const res = await fetch(`/api/posts/${p.id}/comments`, apiFetch);
@@ -550,7 +711,11 @@ export function PostCard({
       const roots = data.comments as CommentNode[];
       setComments(roots);
       const loadedTotal = countCommentsForest(roots);
-      setP((prev) => (prev.commentCount === loadedTotal ? prev : { ...prev, commentCount: loadedTotal }));
+      setP((prev) =>
+        prev.commentCount === loadedTotal
+          ? prev
+          : { ...prev, commentCount: loadedTotal },
+      );
     }
   }, [p.id]);
 
@@ -640,7 +805,11 @@ export function PostCard({
     setShareCount(n);
     try {
       if (navigator.share) {
-        await navigator.share({ title: "Buddy post", text: p.body.slice(0, 140), url });
+        await navigator.share({
+          title: "Buddy post",
+          text: p.body.slice(0, 140),
+          url,
+        });
       } else {
         await navigator.clipboard.writeText(url);
         setFlash("copy");
@@ -660,7 +829,10 @@ export function PostCard({
     if (!confirm("Delete this post permanently?")) return;
     setBusy(true);
     try {
-      const res = await fetch(`/api/posts/${p.id}`, { method: "DELETE", credentials: "include" });
+      const res = await fetch(`/api/posts/${p.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
       if (!res.ok) return;
       setMenu(false);
       onPostDeleted?.(p.id);
@@ -678,7 +850,8 @@ export function PostCard({
   const isAuthor = p.author.id === currentUser.id;
   const saved = savedLocal;
 
-  const displayReaction: UiReaction | null = myUiReaction ?? (p.likedByMe ? "LIKE" : null);
+  const displayReaction: UiReaction | null =
+    myUiReaction ?? (p.likedByMe ? "LIKE" : null);
 
   async function pickReaction(r: UiReaction) {
     clearReactionPickerHoverTimer();
@@ -690,22 +863,31 @@ export function PostCard({
   }
 
   const totalCommentCount = countCommentsForest(comments);
-  const hasCollapsedCommentPreview = totalCommentCount > COMMENT_PREVIEW_MAX && !showAllComments;
-  const previousCommentsCount = hasCollapsedCommentPreview ? totalCommentCount - COMMENT_PREVIEW_MAX : 0;
-  const flatPreviewRows = hasCollapsedCommentPreview ? sliceRecentCommentsFlat(comments, COMMENT_PREVIEW_MAX) : null;
+  const hasCollapsedCommentPreview =
+    totalCommentCount > COMMENT_PREVIEW_MAX && !showAllComments;
+  const previousCommentsCount = hasCollapsedCommentPreview
+    ? totalCommentCount - COMMENT_PREVIEW_MAX
+    : 0;
+  const flatPreviewRows = hasCollapsedCommentPreview
+    ? sliceRecentCommentsFlat(comments, COMMENT_PREVIEW_MAX)
+    : null;
 
   const seePreviousCommentsLabel =
-    previousCommentsCount === 1 ? "See 1 previous comment" : `See ${previousCommentsCount} previous comments`;
+    previousCommentsCount === 1
+      ? "See 1 previous comment"
+      : `See ${previousCommentsCount} previous comments`;
 
   const facepileUsers = p.likedBy.slice(0, FACEPILE_MAX);
-  const facepileOverflow = p.likeCount > FACEPILE_MAX ? p.likeCount - FACEPILE_MAX : 0;
+  const facepileOverflow =
+    p.likeCount > FACEPILE_MAX ? p.likeCount - FACEPILE_MAX : 0;
 
   function expandAndScrollToCommentsSection() {
     setShowAllComments(true);
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
         const thread = document.getElementById(`post-comments-${p.id}`);
-        if (thread) thread.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        if (thread)
+          thread.scrollIntoView({ behavior: "smooth", block: "nearest" });
         else document.getElementById(`comment-input-${p.id}`)?.focus();
       });
     });
@@ -715,7 +897,9 @@ export function PostCard({
     setShowAllComments(false);
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
-        document.getElementById(`post-comments-${p.id}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        document
+          .getElementById(`post-comments-${p.id}`)
+          ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
       });
     });
   }
@@ -723,19 +907,43 @@ export function PostCard({
   if (buddySkin) {
     const timelineDropId = `_timeline_drop_${p.id}`;
     return (
-      <article id={`post-${p.id}`} className="_feed_inner_timeline_post_area _b_radious6 _padd_b24 _padd_t24 _mar_b16 scroll-mt-24">
+      <article
+        id={`post-${p.id}`}
+        className="_feed_inner_timeline_post_area _b_radious6 _padd_b24 _padd_t24 _mar_b16 scroll-mt-24"
+      >
         {flash === "copy" ? (
-          <div className="_notification_para" style={{ padding: "8px 16px", textAlign: "center", borderBottom: "1px solid #e0f2e9" }}>
+          <div
+            className="_notification_para"
+            style={{
+              padding: "8px 16px",
+              textAlign: "center",
+              borderBottom: "1px solid #e0f2e9",
+            }}
+          >
             Link copied — share it anywhere.
           </div>
         ) : null}
         {flash === "copy-fail" ? (
-          <div className="_notification_para" style={{ padding: "8px 16px", textAlign: "center", borderBottom: "1px solid #fde68a" }}>
+          <div
+            className="_notification_para"
+            style={{
+              padding: "8px 16px",
+              textAlign: "center",
+              borderBottom: "1px solid #fde68a",
+            }}
+          >
             Could not copy — try again or copy the URL from the address bar.
           </div>
         ) : null}
         {flash === "saved" ? (
-          <div className="_notification_para" style={{ padding: "8px 16px", textAlign: "center", borderBottom: "1px solid #e0e7ff" }}>
+          <div
+            className="_notification_para"
+            style={{
+              padding: "8px 16px",
+              textAlign: "center",
+              borderBottom: "1px solid #e0e7ff",
+            }}
+          >
             Saved to your bookmarks list.
           </div>
         ) : null}
@@ -749,15 +957,24 @@ export function PostCard({
                 </div>
               </div>
               <div className="_feed_inner_timeline_post_box_txt">
-                <h4 className="_feed_inner_timeline_post_box_title">{displayName(p.author)}</h4>
+                <h4 className="_feed_inner_timeline_post_box_title">
+                  {displayName(p.author)}
+                </h4>
                 <p className="_feed_inner_timeline_post_box_para">
                   {formatRelativeTime(p.createdAt)} .{" "}
-                  <span>{p.visibility === "PUBLIC" ? "Public" : "Private"}</span>
-                  {isPostEdited(p.createdAt, p.updatedAt) ? <> · Edited</> : null}
+                  <span>
+                    {p.visibility === "PUBLIC" ? "Public" : "Private"}
+                  </span>
+                  {isPostEdited(p.createdAt, p.updatedAt) ? (
+                    <> · Edited</>
+                  ) : null}
                 </p>
               </div>
             </div>
-            <div className="_feed_inner_timeline_post_box_dropdown" ref={menuRef}>
+            <div
+              className="_feed_inner_timeline_post_box_dropdown"
+              ref={menuRef}
+            >
               <div className="_feed_timeline_post_dropdown">
                 <button
                   type="button"
@@ -770,14 +987,23 @@ export function PostCard({
                     setMenu((v) => !v);
                   }}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="4" height="17" fill="none" viewBox="0 0 4 17">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="4"
+                    height="17"
+                    fill="none"
+                    viewBox="0 0 4 17"
+                  >
                     <circle cx="2" cy="2" r="2" fill="#C4C4C4" />
                     <circle cx="2" cy="8" r="2" fill="#C4C4C4" />
                     <circle cx="2" cy="15" r="2" fill="#C4C4C4" />
                   </svg>
                 </button>
               </div>
-              <div id={timelineDropId} className={`_feed_timeline_dropdown _timeline_dropdown${menu ? " show" : ""}`}>
+              <div
+                id={timelineDropId}
+                className={`_feed_timeline_dropdown _timeline_dropdown${menu ? " show" : ""}`}
+              >
                 <ul className="_feed_timeline_dropdown_list">
                   <li className="_feed_timeline_dropdown_item">
                     <button
@@ -809,7 +1035,9 @@ export function PostCard({
                           setMenu(false);
                         }}
                       >
-                        {notifyLocal ? "Turn off notifications" : "Turn On Notification"}
+                        {notifyLocal
+                          ? "Turn off notifications"
+                          : "Turn On Notification"}
                       </button>
                     </li>
                   ) : null}
@@ -829,7 +1057,11 @@ export function PostCard({
                     </li>
                   ) : null}
                   <li className="_feed_timeline_dropdown_item">
-                    <button type="button" className="_feed_timeline_dropdown_link" onClick={() => void copyPostLink()}>
+                    <button
+                      type="button"
+                      className="_feed_timeline_dropdown_link"
+                      onClick={() => void copyPostLink()}
+                    >
                       Copy link
                     </button>
                   </li>
@@ -849,7 +1081,12 @@ export function PostCard({
                   ) : null}
                   {isAuthor ? (
                     <li className="_feed_timeline_dropdown_item">
-                      <button type="button" className="_feed_timeline_dropdown_link" onClick={() => void deletePost()} disabled={busy}>
+                      <button
+                        type="button"
+                        className="_feed_timeline_dropdown_link"
+                        onClick={() => void deletePost()}
+                        disabled={busy}
+                      >
                         Delete Post
                       </button>
                     </li>
@@ -859,7 +1096,10 @@ export function PostCard({
             </div>
           </div>
 
-          <h4 className="_feed_inner_timeline_post_title" style={{ whiteSpace: "pre-wrap", fontWeight: 400 }}>
+          <h4
+            className="_feed_inner_timeline_post_title"
+            style={{ whiteSpace: "pre-wrap", fontWeight: 400 }}
+          >
             {p.body}
           </h4>
           {p.imageUrl ? (
@@ -873,12 +1113,21 @@ export function PostCard({
           <div
             className="_feed_inner_timeline_total_reacts_image _buddy_fb_facepile"
             role="img"
-            aria-label={p.likeCount > 0 ? `${p.likeCount} ${p.likeCount === 1 ? "reaction" : "reactions"}` : undefined}
+            aria-label={
+              p.likeCount > 0
+                ? `${p.likeCount} ${p.likeCount === 1 ? "reaction" : "reactions"}`
+                : undefined
+            }
           >
             {facepileUsers.length > 0 || facepileOverflow > 0 ? (
               <>
                 {facepileUsers.map((u, i) => (
-                  <span key={`${u.id}-${i}`} className="_buddy_fb_facepile_item" style={{ zIndex: i + 1 }} title={displayName(u)}>
+                  <span
+                    key={`${u.id}-${i}`}
+                    className="_buddy_fb_facepile_item"
+                    style={{ zIndex: i + 1 }}
+                    title={displayName(u)}
+                  >
                     <UserAvatar user={u} size={32} shape="rounded-full" />
                   </span>
                 ))}
@@ -898,7 +1147,7 @@ export function PostCard({
             <p className="_feed_inner_timeline_total_reacts_para1">
               <button
                 type="button"
-                className="_buddy_fb_stat_comment_btn"
+                className="_buddy_fb_stat_comment_btn gap-1"
                 aria-label={
                   hasCollapsedCommentPreview
                     ? `${seePreviousCommentsLabel} — show full thread`
@@ -908,8 +1157,8 @@ export function PostCard({
                 }
                 onClick={() => expandAndScrollToCommentsSection()}
               >
-                <span className="_buddy_fb_stat_num">{p.commentCount}</span>
-                <span className="_buddy_fb_stat_lbl">Comment</span>
+                <span className="_buddy_fb_stat_num">{p.commentCount}</span>{" "}
+                <span className="_buddy_fb_stat_lbl"> Comment</span>
               </button>
             </p>
             <p className="_feed_inner_timeline_total_reacts_para2 _buddy_fb_stat_share">
@@ -934,7 +1183,9 @@ export function PostCard({
             >
               <span className="_feed_inner_timeline_reaction_link">
                 <span className="_buddy_fb_primary_reaction_inner">
-                  <BuddyPrimaryReactionInner displayReaction={displayReaction} />
+                  <BuddyPrimaryReactionInner
+                    displayReaction={displayReaction}
+                  />
                 </span>
               </span>
             </button>
@@ -955,9 +1206,26 @@ export function PostCard({
                   minWidth: 220,
                 }}
               >
-                <div className="_feed_inner_area _b_radious6" style={{ display: "flex", gap: 4, padding: "6px 10px", boxShadow: "0 4px 12px rgba(0,0,0,.12)" }}>
+                <div
+                  className="_feed_inner_area _b_radious6"
+                  style={{
+                    display: "flex",
+                    gap: 4,
+                    padding: "6px 10px",
+                    boxShadow: "0 4px 12px rgba(0,0,0,.12)",
+                  }}
+                >
                   {REACTION_ORDER.map((r) => (
-                    <button key={r} type="button" className="_feed_reaction" title={reactionMeta(r).label} onClick={(e) => { e.stopPropagation(); void pickReaction(r); }}>
+                    <button
+                      key={r}
+                      type="button"
+                      className="_feed_reaction"
+                      title={reactionMeta(r).label}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void pickReaction(r);
+                      }}
+                    >
                       {reactionMeta(r).emoji}
                     </button>
                   ))}
@@ -968,7 +1236,9 @@ export function PostCard({
           <button
             type="button"
             className="_feed_inner_timeline_reaction_comment _feed_reaction"
-            onClick={() => document.getElementById(`comment-input-${p.id}`)?.focus()}
+            onClick={() =>
+              document.getElementById(`comment-input-${p.id}`)?.focus()
+            }
           >
             <span className="_feed_inner_timeline_reaction_link _buddy_fb_reaction_link">
               <span>
@@ -977,7 +1247,11 @@ export function PostCard({
               </span>
             </span>
           </button>
-          <button type="button" className="_feed_inner_timeline_reaction_share _feed_reaction" onClick={() => void sharePost()}>
+          <button
+            type="button"
+            className="_feed_inner_timeline_reaction_share _feed_reaction"
+            onClick={() => void sharePost()}
+          >
             <span className="_feed_inner_timeline_reaction_link _buddy_fb_reaction_link">
               <span>
                 {buddyFbReactionShareIcon()}
@@ -998,7 +1272,11 @@ export function PostCard({
             >
               <div className="_buddy_fb_pill_inner">
                 <div className="_buddy_fb_pill_avatar">
-                  <UserAvatar user={currentUser} size={32} shape="rounded-full" />
+                  <UserAvatar
+                    user={currentUser}
+                    size={32}
+                    shape="rounded-full"
+                  />
                 </div>
                 <textarea
                   id={`comment-input-${p.id}`}
@@ -1048,7 +1326,10 @@ export function PostCard({
         </div>
 
         {comments.length > 0 ? (
-          <div id={`post-comments-${p.id}`} className="_timline_comment_main _buddy_fb_comments_thread _padd_r24 _padd_l24">
+          <div
+            id={`post-comments-${p.id}`}
+            className="_timline_comment_main _buddy_fb_comments_thread _padd_r24 _padd_l24"
+          >
             {hasCollapsedCommentPreview ? (
               <div className="_previous_comment _buddy_fb_previous_comment_wrap">
                 <button
@@ -1141,18 +1422,25 @@ export function PostCard({
           <div className="flex min-w-0 gap-3">
             <UserAvatar user={p.author} size={44} />
             <div className="min-w-0">
-              <h3 className="truncate font-semibold text-slate-900 dark:text-white">{displayName(p.author)}</h3>
+              <h3 className="truncate font-semibold text-slate-900 dark:text-white">
+                {displayName(p.author)}
+              </h3>
               <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                 <span>{formatRelativeTime(p.createdAt)}</span>
                 <span aria-hidden>·</span>
                 <span className={visStyles}>{visLabel}</span>
                 {isPostEdited(p.createdAt, p.updatedAt) ? (
-                  <span className="text-slate-400 dark:text-slate-500">· Edited</span>
+                  <span className="text-slate-400 dark:text-slate-500">
+                    · Edited
+                  </span>
                 ) : null}
               </p>
             </div>
           </div>
-          <div className="relative flex shrink-0 items-center gap-1" ref={menuRef}>
+          <div
+            className="relative flex shrink-0 items-center gap-1"
+            ref={menuRef}
+          >
             <button
               type="button"
               className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
@@ -1198,7 +1486,10 @@ export function PostCard({
                       setMenu(false);
                     }}
                   >
-                    <span>🔔</span> {notifyLocal ? "Turn off notifications" : "Turn on notifications"}
+                    <span>🔔</span>{" "}
+                    {notifyLocal
+                      ? "Turn off notifications"
+                      : "Turn on notifications"}
                   </button>
                 ) : null}
                 {!isAuthor ? (
@@ -1230,8 +1521,18 @@ export function PostCard({
                       setMenu(false);
                     }}
                   >
-                    <svg className="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    <svg
+                      className="h-4 w-4 text-slate-500"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                      />
                     </svg>
                     Edit post
                   </button>
@@ -1250,10 +1551,16 @@ export function PostCard({
             ) : null}
           </div>
         </div>
-        <p className="mt-4 whitespace-pre-wrap text-[15px] leading-relaxed text-slate-800 dark:text-slate-100">{p.body}</p>
+        <p className="mt-4 whitespace-pre-wrap text-[15px] leading-relaxed text-slate-800 dark:text-slate-100">
+          {p.body}
+        </p>
         {p.imageUrl ? (
           <div className="mt-4 overflow-hidden rounded-xl border border-slate-100 dark:border-slate-800">
-            <img src={p.imageUrl} alt="" className="max-h-[420px] w-full object-cover" />
+            <img
+              src={p.imageUrl}
+              alt=""
+              className="max-h-[420px] w-full object-cover"
+            />
           </div>
         ) : null}
       </div>
@@ -1261,7 +1568,10 @@ export function PostCard({
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-3 dark:border-slate-800 sm:px-6">
         <div className="flex -space-x-2">
           {p.likedBy.slice(0, 5).map((u, i) => (
-            <div key={`${u.id}-${i}`} className="ring-2 ring-white dark:ring-slate-900">
+            <div
+              key={`${u.id}-${i}`}
+              className="ring-2 ring-white dark:ring-slate-900"
+            >
               <UserAvatar user={u} size={28} shape="rounded-full" />
             </div>
           ))}
@@ -1272,7 +1582,13 @@ export function PostCard({
           ) : null}
         </div>
         <div className="flex flex-wrap items-center gap-3 text-sm font-medium text-slate-600 dark:text-slate-400">
-          <button type="button" className="hover:text-indigo-600 dark:hover:text-indigo-400" onClick={() => document.getElementById(`comment-input-${p.id}`)?.focus()}>
+          <button
+            type="button"
+            className="hover:text-indigo-600 dark:hover:text-indigo-400"
+            onClick={() =>
+              document.getElementById(`comment-input-${p.id}`)?.focus()
+            }
+          >
             {p.commentCount} comment{p.commentCount === 1 ? "" : "s"}
           </button>
           <span>
@@ -1297,12 +1613,16 @@ export function PostCard({
           <button
             type="button"
             className={`flex flex-1 items-center justify-center gap-2 py-3 text-sm font-semibold transition ${
-              displayReaction ? "text-indigo-600 dark:text-indigo-400" : "text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800/80"
+              displayReaction
+                ? "text-indigo-600 dark:text-indigo-400"
+                : "text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800/80"
             }`}
             onClick={() => void likePost()}
             disabled={busy}
           >
-            <span className="text-lg leading-none">{displayReaction ? reactionMeta(displayReaction).emoji : "👍"}</span>
+            <span className="text-lg leading-none">
+              {displayReaction ? reactionMeta(displayReaction).emoji : "👍"}
+            </span>
             {displayReaction ? reactionMeta(displayReaction).label : "Like"}
           </button>
           {picker ? (
@@ -1370,8 +1690,13 @@ export function PostCard({
             />
             <div className="mt-2 flex flex-wrap items-center justify-end gap-3">
               <span className="mr-auto text-[10px] text-slate-400 dark:text-slate-500">
-                <kbd className="rounded border border-slate-200 bg-white px-1 font-mono dark:border-slate-600 dark:bg-slate-800">⌘</kbd>+
-                <kbd className="rounded border border-slate-200 bg-white px-1 font-mono dark:border-slate-600 dark:bg-slate-800">Enter</kbd>
+                <kbd className="rounded border border-slate-200 bg-white px-1 font-mono dark:border-slate-600 dark:bg-slate-800">
+                  ⌘
+                </kbd>
+                +
+                <kbd className="rounded border border-slate-200 bg-white px-1 font-mono dark:border-slate-600 dark:bg-slate-800">
+                  Enter
+                </kbd>
               </span>
               <button
                 type="button"
@@ -1387,7 +1712,10 @@ export function PostCard({
       </div>
 
       {comments.length > 0 ? (
-        <div id={`post-comments-${p.id}`} className="border-t border-slate-100 px-5 pb-4 pt-1 dark:border-slate-800 sm:px-6">
+        <div
+          id={`post-comments-${p.id}`}
+          className="border-t border-slate-100 px-5 pb-4 pt-1 dark:border-slate-800 sm:px-6"
+        >
           {hasCollapsedCommentPreview ? (
             <button
               type="button"
@@ -1408,10 +1736,26 @@ export function PostCard({
           ) : null}
           {showAllComments || totalCommentCount <= COMMENT_PREVIEW_MAX
             ? comments.map((c) => (
-                <CommentRow key={c.id} c={c} postId={p.id} depth={0} onThreadChange={reloadComments} viewer={currentUser} flatListMode={false} />
+                <CommentRow
+                  key={c.id}
+                  c={c}
+                  postId={p.id}
+                  depth={0}
+                  onThreadChange={reloadComments}
+                  viewer={currentUser}
+                  flatListMode={false}
+                />
               ))
             : (flatPreviewRows ?? []).map(({ node, depth }) => (
-                <CommentRow key={node.id} c={node} postId={p.id} depth={depth} onThreadChange={reloadComments} viewer={currentUser} flatListMode />
+                <CommentRow
+                  key={node.id}
+                  c={node}
+                  postId={p.id}
+                  depth={depth}
+                  onThreadChange={reloadComments}
+                  viewer={currentUser}
+                  flatListMode
+                />
               ))}
         </div>
       ) : null}

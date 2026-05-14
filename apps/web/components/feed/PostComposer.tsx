@@ -105,10 +105,22 @@ export function PostComposer({
   const nearLimit = len > MAX_BODY - 200;
 
   const buddyMediaRow = (
-    <div className="_feed_inner_text_area_item">
+    <div
+      className="_feed_inner_text_area_item"
+      style={{ flexWrap: "nowrap", gap: 16, width: "auto", margin: 0, justifyContent: "flex-start", flex: "0 1 auto", alignItems: "center" }}
+    >
       <div className="_feed_inner_text_area_bottom_photo _feed_common">
-        <button type="button" className="_feed_inner_text_area_bottom_photo_link" onClick={() => inputRef.current?.click()}>
-          <span className="_feed_inner_text_area_bottom_photo_iamge _mar_img">{photoSvg}</span>
+        <button
+          type="button"
+          className="_feed_inner_text_area_bottom_photo_link"
+          style={{ whiteSpace: "nowrap", color: "#5f6b7a", fontSize: 16, lineHeight: "24px", fontWeight: 500 }}
+          onClick={() => inputRef.current?.click()}
+        >
+          <span className="_feed_inner_text_area_bottom_photo_iamge _mar_img">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="#5f6b7a" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </span>
           Photo
         </button>
       </div>
@@ -116,15 +128,13 @@ export function PostComposer({
         <button
           type="button"
           className="_feed_inner_text_area_bottom_photo_link"
+          style={{ whiteSpace: "nowrap", color: "#5f6b7a", fontSize: 16, lineHeight: "24px", fontWeight: 500 }}
           title="Video posts are coming soon"
           onClick={() => showComingSoon("Video posts")}
         >
           <span className="_feed_inner_text_area_bottom_photo_iamge _mar_img">
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="24" fill="none" viewBox="0 0 22 24">
-              <path
-                fill="#666"
-                d="M11.485 4.5c2.213 0 3.753 1.534 3.917 3.784l2.418-1.082c1.047-.468 2.188.327 2.271 1.533l.005.141v6.64c0 1.237-1.103 2.093-2.155 1.72l-.121-.047-2.418-1.083c-.164 2.25-1.708 3.785-3.917 3.785H5.76c-2.343 0-3.932-1.72-3.932-4.188V8.688c0-2.47 1.589-4.188 3.932-4.188h5.726zm0 1.5H5.76C4.169 6 3.197 7.05 3.197 8.688v7.015c0 1.636.972 2.688 2.562 2.688h5.726c1.586 0 2.562-1.054 2.562-2.688v-.686-6.329c0-1.636-.973-2.688-2.562-2.688zM18.4 8.57l-.062.02-2.921 1.306v4.596l2.921 1.307c.165.073.343-.036.38-.215l.008-.07V8.876c0-.195-.16-.334-.326-.305z"
-              />
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="#5f6b7a" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
             </svg>
           </span>
           Video
@@ -134,15 +144,13 @@ export function PostComposer({
         <button
           type="button"
           className="_feed_inner_text_area_bottom_photo_link"
+          style={{ whiteSpace: "nowrap", color: "#5f6b7a", fontSize: 16, lineHeight: "24px", fontWeight: 500 }}
           title="Events are coming soon"
           onClick={() => showComingSoon("Events")}
         >
           <span className="_feed_inner_text_area_bottom_photo_iamge _mar_img">
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="24" fill="none" viewBox="0 0 22 24">
-              <path
-                fill="#666"
-                d="M14.371 2c.32 0 .585.262.627.603l.005.095v.788c2.598.195 4.188 2.033 4.18 5v8.488c0 3.145-1.786 5.026-4.656 5.026H7.395C4.53 22 2.74 20.087 2.74 16.904V8.486c0-2.966 1.596-4.804 4.187-5v-.788c0-.386.283-.698.633-.698.32 0 .584.262.626.603l.006.095v.771h5.546v-.771c0-.386.284-.698.633-.698zm3.546 8.283H4.004l.001 6.621c0 2.325 1.137 3.616 3.183 3.697l.207.004h7.132c2.184 0 3.39-1.271 3.39-3.63v-6.692z"
-              />
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="#5f6b7a" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </span>
           Event
@@ -152,15 +160,13 @@ export function PostComposer({
         <button
           type="button"
           className="_feed_inner_text_area_bottom_photo_link"
+          style={{ whiteSpace: "nowrap", color: "#5f6b7a", fontSize: 16, lineHeight: "24px", fontWeight: 500 }}
           title="Articles are coming soon"
           onClick={() => showComingSoon("Articles")}
         >
           <span className="_feed_inner_text_area_bottom_photo_iamge _mar_img">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="20" fill="none" viewBox="0 0 18 20">
-              <path
-                fill="#666"
-                d="M12.49 0c2.92 0 4.665 1.92 4.693 5.132v9.659c0 3.257-1.75 5.209-4.693 5.209H5.434c-.377 0-.734-.032-1.07-.095l-.2-.041C2 19.371.74 17.555.74 14.791V5.209c0-.334.019-.654.055-.96C1.114 1.564 2.799 0 5.434 0h7.056z"
-              />
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="#5f6b7a" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           </span>
           Article
@@ -170,8 +176,14 @@ export function PostComposer({
   );
 
   const buddyPostBtn = (
-    <div className="_feed_inner_text_area_btn">
-      <button type="button" className="_feed_inner_text_area_btn_link" disabled={loading} onClick={() => void submit()}>
+    <div className="_feed_inner_text_area_btn" style={{ width: "auto", flex: "0 0 auto", marginLeft: "auto", alignSelf: "center" }}>
+      <button
+        type="button"
+        className="_feed_inner_text_area_btn_link"
+        style={{ width: 102, height: 52, borderRadius: 8, padding: "0 18px", display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+        disabled={loading}
+        onClick={() => void submit()}
+      >
         <svg className="_mar_img" xmlns="http://www.w3.org/2000/svg" width="14" height="13" fill="none" viewBox="0 0 14 13">
           <path
             fill="#fff"
@@ -215,7 +227,23 @@ export function PostComposer({
             />
           </div>
         </div>
-        <div className="_feed_inner_text_area_bottom" style={{ marginTop: 12, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div
+          className="_feed_inner_text_area_bottom"
+          style={{
+            marginTop: 12,
+            display: "grid",
+            gridTemplateColumns: "minmax(0,1fr) auto",
+            alignItems: "center",
+            justifyContent: "normal",
+            gap: 14,
+            overflow: "hidden",
+            background: "#e9eff6",
+            padding: "6px 12px",
+            borderRadius: 6,
+            borderTop: "none",
+            minHeight: 64,
+          }}
+        >
           {buddyMediaRow}
           {buddyPostBtn}
         </div>
